@@ -52,7 +52,6 @@ class GetFactory extends BaseFactory
     public function getResponse($format)
     {
         $response = array();
-
         foreach ($this->data as $row) {
             switch ($format) {
                 case self::FULL:

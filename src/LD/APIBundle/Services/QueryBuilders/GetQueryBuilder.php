@@ -36,7 +36,7 @@ class GetQueryBuilder extends DefaultQueryBuilder
     public function createQuery(array $elements, $graph = null)
     {
         $request = Request::createFromGlobals();
-        $params = $request->attributes->get('_route_params');
+        $params = $request->attributes->get('_route_params'); #BugCheck - $params appears to be empty right now...
         $_id = $params['id'];
 
         $query = str_replace(
