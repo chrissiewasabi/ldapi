@@ -93,6 +93,7 @@ class CountFactory extends BaseFactory
                 $entity = new EmptyEntity('', '', '', '');
                 $entity->setCount($row->count->getValue());
                 $response[] = $entity;
+		$total .= $row->count->getValue();
             } elseif ($key == 'all') {
                 foreach ($rows as $row) {
                     $url = $row->url;
@@ -117,8 +118,9 @@ class CountFactory extends BaseFactory
                     $entity = new Region(
                         $metadataUrl, $objectId, $objectName, $objectType
                     );
-                    $entity->count = $row->count->getValue();
+                    $entity->setCount($row->count->getValue());
                     $response[] = $entity;
+		    $total .= $row->count->getValue();
                 }
             } else {
                 // Not reachable
@@ -196,7 +198,6 @@ class CountFactory extends BaseFactory
         $router = $this->container->get('router');
 
         $response = array();
-
         // this we know is a multipart query
         foreach ($data as $key => $rows) {
             if ($key == 'none') {
@@ -208,7 +209,8 @@ class CountFactory extends BaseFactory
                 foreach ($rows as $row) {
                     $url = $row->url;
 
-                    $objectName = trim($row->label->getValue());
+                    $objectName = trim($row->countrylabel->getValue());
+                    $twolettercode = trim($row->countrycode->getValue());
                     $objectType = 'country';
 
                     $parts = explode('/', trim($url, ' /'));
@@ -225,10 +227,11 @@ class CountFactory extends BaseFactory
                         UrlGeneratorInterface::ABSOLUTE_PATH
                     );
 
-                    $entity = new Theme(
-                        'NPIS', $metadataUrl, $objectId, $objectName, $objectType
+                    $entity = new Country(
+                         $metadataUrl, $objectId, $objectName, $objectType
                     );
                     $entity->setCount($row->count->getValue());
+			print_r($entity);
 
                     $response[] = $entity;
                 }
