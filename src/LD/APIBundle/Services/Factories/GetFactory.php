@@ -26,12 +26,32 @@ class GetFactory extends BaseFactory
      */
     public function process($data, $type, $graph = 'all')
     {
+        
+        $func = 'get' . ucfirst($type);
+        $this->data = call_user_func_array(
+            array($this, $func),
+            array($data, $graph, $type)
+        );
+        /* Debug code for outputing the EasyRDF object
         return $this->data = array(
             'object_id' => $type . ' ' . $graph,
             'object_name' => 'Unkown object',
             'metadata_url' => $this->getContainer()->get('router')->generate('ld_api_api_index'),
             'data' => print_r($data, true),
-        );
+        );*/
+    }
+
+    /**
+     * Parse the results and build the response data array
+     *
+     * @param mixed  $data  An EasyRDF object containing the results of a construct query
+     * @param string $graph The name of the graph it use.
+     *
+     * @return array
+     */
+    
+    function getDocument($data, $graph) {
+        return "TEST";
     }
 
     /**
