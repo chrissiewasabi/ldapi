@@ -228,10 +228,10 @@ class CountFactory extends BaseFactory
                     );
 
                     $entity = new Country(
-                         $metadataUrl, $objectId, $objectName, $objectType
+                        $twolettercode, $metadataUrl, $objectId, $objectName, $objectType
                     );
                     $entity->setCount($row->count->getValue());
-   		    print_r($entity);
+                    print_r($entity);
 
                     $response[] = $entity;
                 }
