@@ -86,6 +86,9 @@ parameters:
                       OPTIONAL { ?article <http://purl.org/dc/terms/coverage> ?region .
                           ?region a <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/geographical_region>.}
                       FILTER(!BOUND(?region))
+                      ++ FILTER
+                      substitue the following __FOO__ for whatever was in the foo query param
+                      -- FILTER
                   }
               all:
                 unlimited: true
