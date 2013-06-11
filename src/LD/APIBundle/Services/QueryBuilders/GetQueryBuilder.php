@@ -40,7 +40,7 @@ class GetQueryBuilder extends DefaultQueryBuilder
         $request = $this->container->get('request');
         $params = $request->attributes->get('_route_params');
         $_id = $params['id'];
-
+	$_id = 'A64912';
         $query = str_replace(
             '__URI__',
             'http://linked-development.org/eldis/output/' . $_id . '/',
