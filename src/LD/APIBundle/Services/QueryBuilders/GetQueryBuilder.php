@@ -30,13 +30,15 @@ class GetQueryBuilder extends DefaultQueryBuilder
      *
      * @param array  $elements The query in the form of an array
      * @param string $graph    The graph to access
+     * @param array  $data     Parameters that are available to be replaced in the query
      *
      * @return string
      */
-    public function createQuery(array $elements, $graph = null)
+    public function createQuery(array $elements, $graph = null, $data = array())
     {
-        $request = Request::createFromGlobals();
-        $params = $request->attributes->get('_route_params'); #BugCheck - $params appears to be empty right now...
+        // $request = Request::createFromGlobals();
+        $request = $this->container->get('request');
+        $params = $request->attributes->get('_route_params');
         $_id = $params['id'];
 
         $query = str_replace(
