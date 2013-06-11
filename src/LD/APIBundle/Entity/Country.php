@@ -27,13 +27,13 @@ class Country extends AbstractBaseEntity
     /**
      * Constructor
      *
-     * @param string $twolettercode Two letter country code
      * @param string $metadataUrl   metadataUrl
      * @param string $objectId      objectId
      * @param string $objectName    objectName
      * @param string $objectType    objectType
+     * @param string $twolettercode Two letter country code
      */
-    public function __constuct($metadataUrl, $objectId, $objectName, $objectType, $twolettercode)
+    public function __construct($metadataUrl, $objectId, $objectName, $objectType, $twolettercode)
     {
         parent::__construct($metadataUrl, $objectId, $objectName, $objectType);
         $this->setTwoLetterCode($twolettercode);
@@ -68,5 +68,7 @@ class Country extends AbstractBaseEntity
     {
         $data = parent::toArray($format);
         $data['iso_two_letter_code'] = $this->twolettercode;
+
+        return $data;
     }
 }
