@@ -93,7 +93,7 @@ class CountFactory extends BaseFactory
                 $entity = new EmptyEntity('', '', '', '');
                 $entity->setCount($row->count->getValue());
                 $response[] = $entity;
-		$total .= $row->count->getValue();
+                $total .= $row->count->getValue();
             } elseif ($key == 'all') {
                 foreach ($rows as $row) {
                     $url = $row->url;
@@ -120,7 +120,7 @@ class CountFactory extends BaseFactory
                     );
                     $entity->setCount($row->count->getValue());
                     $response[] = $entity;
-		    $total .= $row->count->getValue();
+                    $total .= $row->count->getValue();
                 }
             } else {
                 // Not reachable
@@ -215,6 +215,7 @@ class CountFactory extends BaseFactory
 
                     $parts = explode('/', trim($url, ' /'));
                     $objectId = array_pop($parts);
+                    $objectId = 'foo';
 
                     $metadataUrl = $router->generate(
                         'ld_api_api_index', // TODO This needs correcting when get routes are done
@@ -228,8 +229,10 @@ class CountFactory extends BaseFactory
                     );
 
                     $entity = new Country(
-                        $twolettercode, $metadataUrl, $objectId, $objectName, $objectType
+                        $metadataUrl, $objectId, $objectName, $objectType, $twolettercode
                     );
+                    // The php version in debian doesn't seem to support constructor overriding
+                    $entity->setTwoLetterCode($twolettercode);
                     $entity->setCount($row->count->getValue());
                     print_r($entity);
 

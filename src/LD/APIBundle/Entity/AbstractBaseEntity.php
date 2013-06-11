@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Top level entity
  */
-abstract class AbstractBaseEntity extends \EasyRdf_Resource
+abstract class AbstractBaseEntity
 {
     const SHORT = 1;
     const FULL = 2;
