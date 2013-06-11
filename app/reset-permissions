@@ -184,26 +184,6 @@ else
     sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/app/{cache,logs}
     sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/app/{cache,logs}
     sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/app/{cache,logs}
-
-    sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/imagecache
-    sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/imagecache
-    sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/imagecache
-    
-    sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/content
-    sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/content
-    sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/content
-
-    sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/public/images
-    sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/public/images
-    sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/public/images
-
-    sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/media
-    sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/media
-    sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/web/media
-    
-    sudo setfacl -R  -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/config/blocks.yml
-    sudo setfacl -dR -m   u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/config/blocks.yml
-    sudo setfacl -R  -m d:u:$webuser:rwx -m u:$syuser:rwx -m g:$sygroup:rwx $CWD/src/TOCC/HRBundle/Resources/config/blocks.yml
 fi
 
 set +x
