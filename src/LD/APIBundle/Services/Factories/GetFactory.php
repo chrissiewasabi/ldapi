@@ -26,17 +26,12 @@ class GetFactory extends BaseFactory
      */
     public function process($data, $type, $graph = 'all')
     {
-        $this->container->get('logger')->debug(
-            'Processing response, data type: ' . $this->getType($data)
+        return $this->data = array(
+            'object_id' => $type . ' ' . $graph,
+            'object_name' => 'Unkown object',
+            'metadata_url' => $this->getContainer()->get('router')->generate('ld_api_api_index'),
+            'data' => print_r($data, true),
         );
-
-        $func = 'get' . ucfirst($type);
-        $this->data = call_user_func_array(
-            array($this, $func),
-            array($data, $graph, $type)
-        );
-
-        return $this->data;
     }
 
     /**
@@ -51,24 +46,15 @@ class GetFactory extends BaseFactory
      */
     public function getResponse($format)
     {
-        $response = array();
-        foreach ($this->data as $row) {
-            switch ($format) {
-                case self::FULL:
-                    $data = $row->full();
-                    $data['count'] = $row->getCount();
-                    $response[] = $data;
-                    break;
-                default:
-                case self::SHORT:
-                    $data = $row->short();
-                    $data['count'] = $row->getCount();
-                    $response[] = $data;
-                    break;
-            }
+        switch ($format) {
+            case self::FULL:
+                return $this->data;
+                break;
+            default:
+            case self::SHORT:
+                return $this->data;
+                break;
         }
-
-        return $response;
     }
 
 }
