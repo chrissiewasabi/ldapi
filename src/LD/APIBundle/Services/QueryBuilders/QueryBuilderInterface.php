@@ -27,8 +27,9 @@ interface QueryBuilderInterface
      *
      * @param array  $elements The query in the form of an array
      * @param string $graph    The graph to access
+     * @param array  $data     Parameters that are available to be replaced in the query
      *
      * @return string
      */
-    public function createQuery(array $elements, $graph = null);
+    public function createQuery(array $elements, $graph = null, $data = array());
 }
