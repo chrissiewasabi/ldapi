@@ -210,16 +210,16 @@ class CountFactory extends BaseFactory
 
                     $objectName = trim($row->countrylabel->getValue());
                     $twolettercode = trim($row->countrycode->getValue());
-                    $objectType = 'country';
+                    $objectType = 'countries';
 
                     $objectId = $row->countrycode->getValue();
 
                     $metadataUrl = $router->generate(
-                        'ld_api_api_index', // TODO This needs correcting when get routes are done
+                        'ld_api_get_get',
                         array(
                             'graph' => $graph,
-                            'obj' => $objectType,
-                            'parameter' => $objectId,
+                            'object' => $objectType,
+                            'id' => $objectId,
                             'format' => 'full',
                         ),
                         UrlGeneratorInterface::ABSOLUTE_PATH
@@ -229,7 +229,7 @@ class CountFactory extends BaseFactory
                         $metadataUrl, $objectId, $objectName, $objectType, $twolettercode
                     );
                     // The php version in debian doesn't seem to support constructor overriding
-                    $entity->setTwoLetterCode($twolettercode);
+                    // $entity->setTwoLetterCode($twolettercode);
                     $entity->setCount($row->count->getValue());
 
                     $response[] = $entity;

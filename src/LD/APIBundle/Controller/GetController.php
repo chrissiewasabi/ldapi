@@ -22,9 +22,34 @@ class GetController extends APIController
      * @param string $graph  the graph to use, see service.yml
      * @param string $object documents|assets|countries|themes|organisations|region
      * @param string $id     the object id
+     * @param string $format short|full
      *
      * @Route(
      *      "/{graph}/get/{object}/{id}",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *      },
+     *      defaults={
+     *          "format" = "short",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/get/{object}/{id}/",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *      },
+     *      defaults={
+     *          "format" = "short",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/get/{object}/{id}/{format}",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/get/{object}/{id}/{format}/",
      *      requirements={
      *          "object" = "documents|assets|countries|themes|organisations|region",
      *      }
@@ -32,7 +57,7 @@ class GetController extends APIController
      * @Method({"GET", "HEAD", "OPTIONS"})
      * @return Response
      */
-    public function getAction($graph, $object, $id)
+    public function getAction($graph, $object, $id, $format)
     {
         // get and set  the query factory
         $querybuilders = $this->container->getParameter('querybuilder');
