@@ -207,15 +207,12 @@ class CountFactory extends BaseFactory
                 $response[] = $entity;
             } elseif ($key == 'all') {
                 foreach ($rows as $row) {
-                    $url = $row->url;
 
                     $objectName = trim($row->countrylabel->getValue());
                     $twolettercode = trim($row->countrycode->getValue());
                     $objectType = 'country';
 
-                    $parts = explode('/', trim($url, ' /'));
-                    $objectId = array_pop($parts);
-                    $objectId = 'foo';
+                    $objectId = $row->countrycode->getValue();
 
                     $metadataUrl = $router->generate(
                         'ld_api_api_index', // TODO This needs correcting when get routes are done
@@ -234,7 +231,6 @@ class CountFactory extends BaseFactory
                     // The php version in debian doesn't seem to support constructor overriding
                     $entity->setTwoLetterCode($twolettercode);
                     $entity->setCount($row->count->getValue());
-                    print_r($entity);
 
                     $response[] = $entity;
                 }
