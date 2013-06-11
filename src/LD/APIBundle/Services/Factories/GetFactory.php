@@ -26,6 +26,7 @@ class GetFactory extends BaseFactory
      */
     public function process($data, $type, $graph = 'all')
     {
+        $type = 'documents'; // <-- ISSUE: $type does not appear to be being passed in
         
         $func = 'get' . ucfirst($type);
         $this->data = call_user_func_array(
@@ -51,7 +52,7 @@ class GetFactory extends BaseFactory
      */
     
     function getDocument($data, $graph) {
-        return "TEST";
+        return "TEST - Documents";
     }
 
     /**
