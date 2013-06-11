@@ -87,6 +87,7 @@ class CountFactory extends BaseFactory
         $response = array();
 
         // this we know is a multipart query
+        $total = 0;
         foreach ($data as $key => $rows) {
             if ($key == 'none') {
                 $row = $rows[0]; // This is a single result
