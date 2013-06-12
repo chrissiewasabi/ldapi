@@ -64,7 +64,6 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface, ContainerA
     public function filterSubstitution($where)
     {
         $filterCount = substr_count($where, self::FILTER_START);
-        $start = self::FILTER_START;
         $request = $this->container->get('request');
         $params = $request->query->all();
         if ($filterCount) {

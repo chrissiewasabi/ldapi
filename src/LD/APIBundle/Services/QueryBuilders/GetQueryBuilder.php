@@ -39,6 +39,7 @@ class GetQueryBuilder extends DefaultQueryBuilder
         // $request = Request::createFromGlobals();
         $request = $this->container->get('request');
         $params = $request->attributes->get('_route_params');
+        $this->container->get('logger')->info(json_encode($params));
         $_id = $params['id'];
 
         $query = str_replace(
