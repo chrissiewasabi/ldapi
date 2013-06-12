@@ -256,12 +256,15 @@ parameters:
                      ?resource dcterms:subject ?subject.
                      ?subject rdfs:label ?subjectTitle.
                      ?subject dcterms:identifier ?subjectID.
+                     ?resource bibo:uri ?uri.
                      # Term relationships
-                     ?subject skos:broader ?subjectParent.
+                     ?subjectParent skos:narrower ?subject.
                      ?subjectParent rdfs:label ?subjectParentLabel.
                      ?subjectParent dcterms:identifier ?subjectParentID.
                      # Coverage
                      ?resource dcterms:coverage ?coverage.
+                     ?coverage fao:codeISO2 ?coverageISO.
+                     ?coverage dcterms:identifier ?coverageID.
                      ?coverage rdfs:label ?coverageTitle.
                      ?resource dcterms:language ?language.
                      ?resource dcterms:identifier ?identifier.
@@ -269,6 +272,9 @@ parameters:
                      ?resource dcterms:date ?date.
                      ?resource dcterms:publisher ?publisher.
                      ?publisher foaf:name ?publisherName.
+                     ?publisher dcterms:identifier ?publisherID.
+                     ?publisher vcard:hasAddress ?publisherAddress.
+                     ?publisherAddress vcard:country ?publisherCountry.
                  }
                 where: >
                     WHERE {
@@ -294,7 +300,7 @@ parameters:
                               ?subject dcterms:identifier ?subjectID.
                           }
                           OPTIONAL {
-                              ?subject skos:broader ?subjectParent
+                              ?subjectParent skos:narrower ?subject.
                               # Uncomment out the line below to search up the category tree and give all the required steps for building a category path
                               # This is expensive, so unless there are use-cases drawing on the category tree from the API we may want to leave it out
                               # OPTION (transitive, t_max(4), t_in(?subject), t_out(?subjectParent), t_step("step_no") as ?level)
@@ -313,6 +319,12 @@ parameters:
                          ?coverage fao:nameList ?coverageTitle.
                          FILTER(lang(?coverageTitle) = 'en' || lang(?coverageTitle) = "")
                         }
+                        OPTIONAL {
+                         ?coverage dcterms:identifier ?coverageID.
+                        }
+                        OPTIONAL {
+                         ?coverage fao:codeISO2 ?coverageISO.
+                        }
                       }
                       # Language
                       OPTIONAL { ?resource dcterms:language ?language. }
@@ -326,6 +338,9 @@ parameters:
                       OPTIONAL {
                           ?resource dcterms:publisher ?publisher.
                           OPTIONAL { ?publisher foaf:name ?publisherName. }
+                          OPTIONAL { ?publisher dcterms:identifier ?publisherID. }
+                          OPTIONAL { ?publisher vcard:hasAddress ?publisherAddress.
+                                    ?publisherAddress vcard:country ?publisherCountry. }
                       }
                       # URI to the document
                       OPTIONAL {
