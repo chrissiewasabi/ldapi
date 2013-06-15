@@ -53,9 +53,9 @@ class GetFactory extends BaseFactory
      */
     
     function getDocuments($data, $graph) {
-
+        
         $data = $data['default'];
-
+        
         foreach($data->allOfType("bibo:Article") as $resource) {
             //Note - we currently don't implement category_subject as this data is not captured in the R4D RDF or in the data coming from ELDIS. 
             
@@ -79,27 +79,37 @@ class GetFactory extends BaseFactory
                   $document['country_focus_ids'][] = $coverage->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeISO2>")->getValue();
                                     
                 } else {
+                    //If we have the UN identifier we use that
+                    $coverageID = $coverage->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN") ? "UN".$coverage->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN>")->getValue() : $coverage->get("dcterms:identifier")->getValue();                                   
                     $document['category_region_array']->Region[] = array("archived"=>"false",
                                                                           "deleted"=>"0",
-                                                                          "metadata_url"=> $this->getContainer()->get('router')->generate('ld_api_api_index').$graph."/get/regions/".$coverage->get("dcterms:identifier")->getValue()."/full",
-                                                                          "object_id"=>$coverage->get("dcterms:identifier")->getValue(),
+                                                                          "metadata_url"=> $this->getContainer()->get('router')->generate('ld_api_api_index').$graph."/get/regions/".$coverageID."/full",
+                                                                          "object_id"=>$coverageID,
                                                                           "object_name"=>$coverage->get("rdfs:label")->getValue(),
                                                                           "object_type"=>"region");
                   $document['category_region_path'][] = $coverage->get("rdfs:label")->getValue();
-                  $document['category_region_ids'][] = $coverage->get("dcterms:identifier")->getValue();
-                  $document['category_region_objects'][] = $coverage->get("dcterms:identifier")->getValue() ."|region|".$coverage->get("rdfs:label")->getValue();
+                  $document['category_region_ids'][] = $coverageID;
+                  $document['category_region_objects'][] = $coverageID ."|region|".$coverage->get("rdfs:label")->getValue();
                 }        
             }
             
             //EasyRDF is currently not getting all the subjects as it should. See https://github.com/practicalparticipation/ldapi/issues/4
             foreach($resource->all("dcterms:subject") as $theme) {
+                if($theme->hasProperty("dcterms:identifier")) {
+                    $themeID = $theme->get("dcterms:identifier")->getValue();
+                } else {
+                    //We are probably dealing with an Agrovoc or dbpedia theme, so just get the last part of the URL
+                    $themeID = str_replace("/","",strrchr($theme->getURI(),"/"));
+                }
+                
+                
                 $document['category_theme_array']->theme[] = array("archived"=>"false",
                                                                     "level" => 'unknown',
-                                                                    "metadata_url" => $this->getContainer()->get('router')->generate('ld_api_api_index').$graph."/get/themes/".$theme->get("dcterms:identifier")->getValue(),
-                                                                    "object_id" => $theme->get("dcterms:identifier")->getValue(),
+                                                                    "metadata_url" => $this->getContainer()->get('router')->generate('ld_api_api_index').$graph."/get/themes/".$themeID,
+                                                                    "object_id" => $themeID,
                                                                     "object_name" => $theme->get("rdfs:label")->getValue(),
                                                                     "object_type"=>"theme");
-                $document['category_theme_ids'][] = $theme->get("dcterms:identifier")->getValue();
+                $document['category_theme_ids'][] = $themeID;
                 
                 //When easy RDF is correctly fetching then we can use skos:narrower properties to output category theme paths here. 
             }
@@ -110,10 +120,10 @@ class GetFactory extends BaseFactory
             $document['name'] = $resource->get("dcterms:title")->getValue();
             $document['object_id'] = $resource->get("dcterms:identifier")->getValue();
             $document['object_type'] = "Document";
-            @ $document['publication_date'] = str_replace("T"," ",$resource->get("dcterms:date")->getValue());
-            @ $document['publication_year'] = date("Y",strtotime($resource->get("dcterms:date")->getValue()));
+            $document['publication_date'] = str_replace("T"," ",$resource->get("dcterms:date")->getValue());
+            $document['publication_year'] = date("Y",strtotime($resource->get("dcterms:date")->getValue()));
 
-            @ $document['publisher'] = $resource->get("dcterms:publisher/foaf:name")->getValue();
+            $document['publisher'] = $resource->get("dcterms:publisher/foaf:name") ? $resource->get("dcterms:publisher/foaf:name")->getValue() : null;
             
             //ToDo - Add more publisher details here (waiting for cache to clear)
             
@@ -121,7 +131,7 @@ class GetFactory extends BaseFactory
             
             $document['title'] = $resource->get("dcterms:title")->getValue();
 
-            $document['urls'][] = $resource->get("<http://purl.org/ontology/bibo/uri>") ? $resource->get("<http://purl.org/ontology/bibo/uri>")->getValue() : null;
+            $document['urls'][] = $resource->get("<http://purl.org/ontology/bibo/uri>") ? $resource->get("<http://purl.org/ontology/bibo/uri>")->getURI() : null;
             
             $document['website_url'] = $resource->get("rdfs:seeAlso") ? $resource->get("rdfs:seeAlso")->getUri() : null;
             

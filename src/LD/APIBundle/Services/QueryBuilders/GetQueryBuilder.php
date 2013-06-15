@@ -36,15 +36,31 @@ class GetQueryBuilder extends DefaultQueryBuilder
      */
     public function createQuery(array $elements, $graph = null, $data = array())
     {
+        
         // $request = Request::createFromGlobals();
         $request = $this->container->get('request');
         $params = $request->attributes->get('_route_params');
         $this->container->get('logger')->info(json_encode($params));
         $_id = $params['id'];
-	$_id = 'A64912';
+	$_graph = $params['graph'];
+        
+        /** For now we base graph selection on the ID. 
+         * 
+         * ELDIS IDs start with A, whereas R4D are numerical.
+         * 
+         * Graph will already be respected by the graph query.
+         * 
+         */
+        if(substr($_id,0,1) == 'A') {
+            $uri = (string)$this->container->parameters["graphs"]["eldis"] . "output/" . $_id . "/";
+            
+        } else {
+            $uri = (string)$this->container->parameters["graphs"]["r4d"] . "output/" . $_id  . "/";
+        }
+        
         $query = str_replace(
             '__URI__',
-            'http://linked-development.org/eldis/output/' . $_id . '/',
+            $uri,
             parent::createQuery($elements, $graph)
         );
 
