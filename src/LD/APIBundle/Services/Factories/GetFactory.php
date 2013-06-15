@@ -56,7 +56,22 @@ class GetFactory extends BaseFactory
         
         $data = $data['default'];
         
+        if($data->isEmpty()) {
+            return array();
+        }
+        
         foreach($data->allOfType("bibo:Article") as $resource) {
+            $resource_id = $resource->get("dcterms:identifier")->getValue();
+            if($resource_id == $resource->getUri()) {
+                //We are dealing with a resource_id which is the URI. We need to make a best guess at the graph and ID. 
+                //We grab graph from just after the domain, and ID from the end of the URL.
+                $resource_url = explode('/',parse_url($resource_id,PHP_URL_PATH));
+                $resource_graph = $resource_url[1];
+                $resource_id = $resource_url[count($resource_url)-2];
+            } else {
+                $resource_graph = $graph;
+            }
+            
             //Note - we currently don't implement category_subject as this data is not captured in the R4D RDF or in the data coming from ELDIS. 
             
             $document = array();
@@ -115,7 +130,7 @@ class GetFactory extends BaseFactory
             }
             
 
-            $document['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index').$graph."/get/documents/".$resource->get("dcterms:identifier")->getValue()."/full";
+            $document['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index').$resource_graph."/get/documents/".$resource_id."/full";
             $document['license_type'] = "Not Known"; //ToDo - get license data into system
             $document['name'] = $resource->get("dcterms:title")->getValue();
             $document['object_id'] = $resource->get("dcterms:identifier")->getValue();

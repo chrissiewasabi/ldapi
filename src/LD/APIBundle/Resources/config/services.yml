@@ -89,20 +89,25 @@ parameters:
                   }
               all:
                 unlimited: true
-                define: ~
-                select: select distinct ?region as ?url ?regionlabel as ?label count(distinct ?article) as ?count
+                define: >
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX bibo: <http://purl.org/ontology/bibo/>
+                    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                    PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                select: select distinct ?coverage as ?url ?regionlabel as ?label count(distinct ?article) as ?count
                 where: >
                   where {
-                       ?article a <http://purl.org/ontology/bibo/Article> .
-                       ?article <http://purl.org/dc/terms/coverage> ?region .
-                       ?region a <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/geographical_region>.
-                       {
-                          ?region <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/nameList> ?regionlabel.
-                       } UNION {
-                          ?region <http://www.w3.org/2000/01/rdf-schema#label> ?regionlabel.
-                       }
-                       FILTER(lang(?regionlabel) = 'en' || lang(?regionlabel) = "")
-                  }
+                         ?article a bibo:Article.
+                         ?article dcterms:coverage ?coverage.
+                         ?coverage a  fao:geographical_region.
+                         {
+                          ?coverage fao:nameList ?regionlabel.
+                         } UNION {
+                           ?coverage rdfs:label ?regionlabel.
+                         }
+                         FILTER(lang(?regionlabel) = 'en' || lang(?regionlabel) = '')
+
+                         } 
           theme:
             # IDS example: http://api.ids.ac.uk/openapi/eldis/count/documents/theme
             # Note: the linked data API may return a very large list of themes here. We may wish to (a) sort the results by count; and (b) offer pagination
@@ -401,31 +406,179 @@ parameters:
                   }
       # Get all
       get_all:
+        documents:
             queries:
               default:
-                documents:
-                  define: ~
-                  select: select distinct ?article ?also ?dcidentifier ?dctype ?dctitle ?dcdate ?dcabstract ?dccreator ?dccoverage ?dcpublisher  ?dclanguage ?theme
-                  where: >
-                    where {
-                        ?article a <http://purl.org/ontology/bibo/Article> .
-                        ?article <http://www.w3.org/2000/01/rdf-schema#seeAlso> ?also .
-                        ?article <http://purl.org/dc/terms/identifier> ?dcidentifier .
-                        ?article <http://purl.org/dc/terms/type> ?dctype .
-                        ?article <http://purl.org/dc/terms/title> ?dctitle  .
-                        ?article <http://purl.org/dc/terms/date> ?dcdate .
-                        ?article <http://purl.org/dc/terms/abstract> ?dcabstract .
-                        ?article <http://purl.org/dc/terms/creator> ?dccreator .
-                        ?article <http://purl.org/dc/terms/coverage> ?dccoverage .
-                        ?article <http://purl.org/dc/terms/publisher> ?dcpublisher .
-                        ?article <http://purl.org/dc/terms/language> ?dclanguage .
-                        ?article <http://purl.org/dc/terms/subject> ?theme .
+                define: >
+                  PREFIX dcterms: <http://purl.org/dc/terms/>
+                  PREFIX bibo: <http://purl.org/ontology/bibo/>
+                  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                  PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                select: >
+                  CONSTRUCT {
+                      ?resource a bibo:Article.
+                      ?resource dcterms:title ?title.
+                      ?resource dcterms:abstract ?abstract.
+                      ?resource dcterms:creator ?creator.
+                      ?resource dcterms:subject ?subject.
+                      ?subject rdfs:label ?subjectTitle.
+                      ?subject dcterms:identifier ?subjectID.
+                      ?resource bibo:uri ?uri.
+                      # Term relationships
+                      ?subjectParent skos:narrower ?subject.
+                      ?subjectParent rdfs:label ?subjectParentLabel.
+                      ?subjectParent dcterms:identifier ?subjectParentID.
+                      # Coverage
+                      ?resource dcterms:coverage ?coverage.
+                      ?coverage fao:codeISO2 ?coverageISO.
+                      ?coverage fao:codeUN ?coverageUN.
+                      ?coverage dcterms:identifier ?coverageID.
+                      ?coverage rdfs:label ?coverageTitle.
+                      ?resource dcterms:language ?language.
+                      ?resource dcterms:identifier ?identifier.
+                      ?resource rdfs:seeAlso ?document.
+                      ?resource dcterms:date ?date.
+                      ?resource dcterms:publisher ?publisher.
+                      ?publisher foaf:name ?publisherName.
+                      ?publisher dcterms:identifier ?publisherID.
+                      ?publisher vcard:hasAddress ?publisherAddress.
+                      ?publisherAddress vcard:country ?publisherCountry.
+                  }
+                where: >
+                  WHERE {
+                    {
+                       SELECT ?resource WHERE {
+                          ?resource a bibo:Article.
+                        ++ FILTER  
+                        #Country filter
+                            ?resource dcterms:coverage ?countryURI.
+                            {
+                              ?countryURI rdfs:label ?country.
+                            } UNION {
+                              ?countryURI fao:nameList ?country.
+                              FILTER(lang(?country) = 'en' || lang(?country) = "")
+                            }
+                            ?countryURI fao:codeISO2 ?iso2.
+                            OPTIONAL { ?countryURI dcterms:identifier ?country_identifier. }
+                           FILTER(regex(?country,'^__country__$','i') || regex(?iso2,'^__country__$') || regex(?country_identifier,'^__country__$'))
+                        -- FILTER 
+                        ++ FILTER  
+                        #Region filter
+                            ?resource dcterms:coverage ?regionURI.
+                            ?regionURI a fao:geographical_region.
+                            {
+                              ?regionURI rdfs:label ?region.
+                            } UNION {
+                              ?regionURI fao:nameList ?region.
+                              FILTER(lang(?region) = 'en' || lang(?region) = "")
+                            }
+                            OPTIONAL { ?regionURI fao:codeUN ?region_UN. }
+                            OPTIONAL { ?regionURI dcterms:identifier ?region_identifier. }
+                           FILTER(regex(?region,'__region__','i') || regex(?region_UN,'^__region__$') || regex(?region_identifier,'^__region__$'))
+                        -- FILTER 
+                        ++ FILTER  
+                        #Theme filter - we cannot support theme path
+                            ?resource dcterms:subject ?subject.
+                            ?subject rdfs:label ?subjectTitle.
+                            OPTIONAL { ?subject dcterms:identifier ?subjectID. }
+                           FILTER(regex(?subjectTitle,'^__subject__$','i') || regex(?subjectID,'^__subject__$'))
+                        -- FILTER 
+                        ++ FILTER  
+                        #Query filter. In future we should use advanced features of Virutoso to address 
+                           ?resource dcterms:title ?title.
+                           OPTIONAL {
+                             ?resource dcterms:subject ?subject.
+                             ?subject rdfs:label ?subjectTitle.
+                           }
+                           OPTIONAL {
+                             ?resource dcterms:abstract ?abstract.
+                           }
+                           FILTER(regex(?title,'__q__','i') || regex(?subjectTitle,'__q__') || regex(?abstract,'__q__'))
+                        -- FILTER 
+                        ++ FILTER  
+                        #IATI Filter
+                           ?resource dcterms:isPartOf ?project.
+                           ?project dcterms:identifier ?projectID.
+                           FILTER(regex(?projectID,'^__iati-identifier__$'))
+                        -- FILTER 
+                       } LIMIT __LIMIT__ OFFSET __OFFSET__
+                       
+                     }
+                    ?resource dcterms:title ?title.
+                    OPTIONAL { ?resource dcterms:abstract ?abstract. }
+                    # Creators
+                    # Handle cases where Creator is directly attached (Eldis), or through a blank node (R4D)
+                    OPTIONAL {
+                         {
+                         ?resource dcterms:creator ?creator.
+                         } UNION {
+                         ?resource dcterms:creator ?creatorURI.
+                         ?creatorURI foaf:name ?creator.
+                         }
+                     FILTER(isLiteral(?creator))
                     }
-              themes:
-                default:
-                  define: ~
-                  select: select distinct ?theme ?a ?b
-                  where: >
-                    where {?article <http://purl.org/dc/terms/subject> ?theme .
-                        ?theme ?a ?b .
-                    } order by ?theme
+                    # Subjects
+                    OPTIONAL {
+                        ?resource dcterms:subject ?subject.
+                        ?subject rdfs:label ?subjectTitle.
+                        OPTIONAL {
+                            ?subject dcterms:identifier ?subjectID.
+                        } 
+                        OPTIONAL {
+                            ?subjectParent skos:narrower ?subject.
+                            # Uncomment out the line below to search up the category tree and give all the required steps for building a category path
+                            # This is expensive, so unless there are use-cases drawing on the category tree from the API we may want to leave it out
+                            # OPTION (transitive, t_max(4), t_in(?subject), t_out(?subjectParent), t_step("step_no") as ?level).
+                            ?subjectParent rdfs:label ?subjectParentLabel.
+                            OPTIONAL { ?subjectParent dcterms:identifier ?subjectParentID. }
+                        }
+                    }
+                    # Coverage
+                    OPTIONAL {
+                      ?resource dcterms:coverage ?coverage.
+                      # Handle for different ways in which coverage may be labelled.
+                      {
+                       ?coverage rdfs:label ?coverageTitle.
+                      } UNION {
+                       ?coverage fao:nameList ?coverageTitle.
+                       FILTER(lang(?coverageTitle) = 'en' || lang(?coverageTitle) = "")
+                      }
+                      OPTIONAL {
+                       ?coverage dcterms:identifier ?coverageID.
+                      }
+                      OPTIONAL {
+                       ?coverage fao:codeISO2 ?coverageISO.
+                      }
+                      OPTIONAL {
+                       ?coverage fao:codeUN ?coverageUN.
+                      }
+                    }
+                    # Language
+                    OPTIONAL { ?resource dcterms:language ?language. }
+                    # Identifiers
+                    OPTIONAL { ?resource dcterms:identifier ?identifier. }
+                    # SeeAlso
+                    OPTIONAL { ?resource rdfs:seeAlso ?document. }
+                    # Date
+                    OPTIONAL { ?resource dcterms:date ?date.}
+                    # Publisher Information
+                    OPTIONAL {
+                        ?resource dcterms:publisher ?publisher.
+                        OPTIONAL { ?publisher foaf:name ?publisherName. }
+                        OPTIONAL { ?publisher dcterms:identifier ?publisherID. }
+                        OPTIONAL { ?publisher vcard:hasAddress ?publisherAddress.
+                                  ?publisherAddress vcard:country ?publisherCountry. }
+                    }
+                    # URI to the document
+                    OPTIONAL {
+                        ?resource bibo:uri ?uri.
+                    }
+                  }
+        themes:
+        default:
+          define: ~
+          select: select distinct ?theme ?a ?b
+          where: >
+            where {?article <http://purl.org/dc/terms/subject> ?theme .
+                ?theme ?a ?b .
+            } order by ?theme

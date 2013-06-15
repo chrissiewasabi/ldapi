@@ -107,7 +107,7 @@ class GetController extends APIController
         // get and set  the query factory
         $querybuilders = $this->container->getParameter('querybuilder');
         if (isset($querybuilders['get_all'][$object])) {
-            $builder = $querybuilders['get'][$object];
+            $builder = $querybuilders['get_all'][$object];
         } elseif (isset($querybuilders['default'])) {
             $builder = $querybuilders['default'];
         } else {
@@ -119,7 +119,7 @@ class GetController extends APIController
         $this->container->get('logger')->info(
             sprintf('Fetching sparql: get->%s', $object)
         );
-        $spql = $spqls['get'][$object];
+        $spql = $spqls['get_all'][$object];
 
         // fetch factory
         $entfactories = $this->container->getParameter('factories');

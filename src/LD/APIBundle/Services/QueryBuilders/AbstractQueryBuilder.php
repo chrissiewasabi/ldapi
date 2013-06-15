@@ -118,8 +118,14 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface, ContainerA
             $request = Request::createFromGlobals();
             $offset = $this->getOffset($request);
             $limit = $this->getLimit($request);
-
-            return sprintf('%s limit %s offset %s', $query, $limit, $offset);
+            
+            // If the query contains embedded LIMIT and OFFSET blocks add in there, else append to query
+            if(strpos($query, "__LIMIT__")) {
+                $query = str_replace("__LIMIT__", $limit, $query);
+                $query = str_replace("__OFFSET__", $offset, $query);
+            } else {
+                return sprintf('%s limit %s offset %s', $query, $limit, $offset);
+            }
         }
 
         return $query;
