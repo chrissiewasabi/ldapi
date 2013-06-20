@@ -26,7 +26,8 @@ class GetFactory extends BaseFactory
      */
     public function process($data, $type, $graph = 'all')
     {
-        $type = 'documents'; // <-- ISSUE: $type does not appear to be being passed in
+        
+        //$type = 'documents'; // <-- ISSUE: $type does not appear to be being passed in
         
         $func = 'get' . ucfirst($type);
 
@@ -46,15 +47,15 @@ class GetFactory extends BaseFactory
     /**
      * Parse the results and build the response data array
      *
-     * @param mixed  $data  An EasyRDF object containing the results of a construct query
+     * @param mixed  $rdf An EasyRDF object containing the results of a construct query
      * @param string $graph The name of the graph it use.
      *
      * @return array
      */
     
-    function getDocuments($data, $graph) {
+    function getDocuments($rdf, $graph) {
         
-        $data = $data['default'];
+        $data = $rdf['default'];
         
         if($data->isEmpty()) {
             return array();
@@ -150,12 +151,134 @@ class GetFactory extends BaseFactory
             
             $document['website_url'] = $resource->get("rdfs:seeAlso") ? $resource->get("rdfs:seeAlso")->getUri() : null;
             
-            $return[] = $document;
+            $results[] = $document;
         }
         
-        return $return;
+        $metadata = $this->buildMetaData("Unknown");
+        
+        
+        return array("results"=>$results, "metadata"=>$metadata);
     
     }
+    
+     /**
+     * Parse the results and build the response data array
+     *
+     * @param mixed  $rdf  An EasyRDF object containing the results of a construct query
+     * @param string $graph The name of the graph it use.
+     *
+     * @return array
+     */
+     function getCountries($rdf, $graph) {
+        
+        $data = $rdf['default'];
+        $count = $rdf['count'];       
+        
+        //First we get our counts
+        foreach($count as $row) {
+            $total_results = $row->count->getValue();
+        }
+        $metadata = $this->buildMetaData($total_results);
+        
+        //Now we build the array
+        if($data->isEmpty()) {
+            return array();
+        }
+        
+        $return = array();       
+        #Currently we don't seem to be getting the SKOS concept type coming through. Need to find another way to iterate...
+              
+        foreach($data->allOfType("skos:Concept") as $country) {
+            $document['alternative_name'] = $country->get("rdfs:label")->getValue();
+            $document['iso_two_letter_code'] = $country->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeISO2>")->getValue();
+            $document['title'] = $country->get("rdfs:label")->getValue();
+            $document['object_type'] = 'Country';
+            $document['site'] = $graph;
+            $document['object_id'] = $country->hasProperty("dcterms:identifier") ? $country->get("dcterms:identifier")->getValue() : null;
+            $document['iso_number'] = $country->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN") ? $country->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN>")->getValue() : null;
+            $document['country_name'] = $country->get("rdfs:label")->getValue();
+            $document['iso_three_letter_code'] = $country->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeISO3") ? $country->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeISO3>")->getValue() : null;
+            
+            $results[] = $document;
+        }
+        
+        return array("results"=>$results, "metadata"=>$metadata);
+        
+     }
+     
+     /**
+     * Parse the results and build the response data array
+     *
+     * @param mixed  $rdf  An EasyRDF object containing the results of a construct query
+     * @param string $graph The name of the graph it use.
+     *
+     * @return array
+     */
+     function getRegions($rdf, $graph) {
+        
+        $data = $rdf['default'];
+        $count = $rdf['count'];       
+        
+        //First we get our counts
+        foreach($count as $row) {
+            $total_results = $row->count->getValue();
+        }
+        $metadata = $this->buildMetaData($total_results);
+        
+        //Now we build the array
+        if($data->isEmpty()) {
+            return array();
+        }
+        
+        $return = array();       
+        #Currently we don't seem to be getting the SKOS concept type coming through. Need to find another way to iterate...
+              
+        foreach($data->allOfType("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/geographical_region>") as $region) {
+            $document['archived'] = "false";
+            $document['title'] = $region->get("rdfs:label")->getValue();
+            $document['object_type'] = "region";
+           
+            if($region->hasProperty("dcterms:identifier")) {
+                $document['object_id'] = "C".$region->get("dcterms:identifier")->getValue();
+                $document['category_id'] = $region->get("dcterms:identifier")->getValue();
+            }
+            if($region->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN")) {
+                //Prefer the UN code if available.
+                $document['object_id'] = $region->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN>")->getValue();
+            }
+            $document['category_path'] = $region->get("rdfs:label")->getValue();
+            
+            $results[] = $document;
+        }
+        
+        return array("results"=>$results, "metadata"=>$metadata);
+        
+     }
+     /**
+      *         {
+            "archived": "false",
+            "level": "1",
+            "title": "Australasia, Japan and South Korea",
+            "timestamp": "2013-01-15 20:47:06",
+            "cat_first_parent": "1701",
+            "object_type": "region",
+            "site": "bridge",
+            "parent_object_id": "C1",
+            "cat_parent": "1",
+            "object_id": "C1701",
+            "superparent_object_id": "C1",
+            "cat_superparent": "1",
+            "toplevel_object_id": "C1701",
+            "metadata_url": "http://api.ids.ac.uk/openapi/bridge/get/regions/C1701/full/australasia-japan-and-south-korea/",
+            "category_id": 1701,
+            "cat_level": "1",
+            "category_path": "Australasia, Japan and South Korea"
+        },
+      */
+
+    
+     
+     
 
     /**
      * Format the data held by this factory ready to be output by the API.

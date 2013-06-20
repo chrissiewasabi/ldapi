@@ -20,14 +20,14 @@ class GetController extends APIController
 {
     /**
      * @param string $graph  the graph to use, see service.yml
-     * @param string $object documents|assets|countries|themes|organisations|region
+     * @param string $object documents|assets|countries|themes|organisations|regions
      * @param string $id     the object id
      * @param string $format short|full
      *
      * @Route(
      *      "/{graph}/get/{object}/{id}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      },
      *      defaults={
      *          "format" = "short",
@@ -36,7 +36,7 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get/{object}/{id}/",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      },
      *      defaults={
      *          "format" = "short",
@@ -45,13 +45,13 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get/{object}/{id}/{format}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      }
      * )
      * @Route(
      *      "/{graph}/get/{object}/{id}/{format}/",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      }
      * )
      * @Method({"GET", "HEAD", "OPTIONS"})
@@ -96,13 +96,13 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get_all/{object}/{id}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      }
      * )
      * @Method({"GET", "HEAD", "OPTIONS"})
      * @return Response
      */
-    public function getAllAction($graph, $object, $id)
+    public function getAllAction($graph, $object, $id, $format = 'full')
     {
         // get and set  the query factory
         $querybuilders = $this->container->getParameter('querybuilder');
@@ -135,12 +135,12 @@ class GetController extends APIController
     
      /**
      * @param string $graph  the graph to use, see service.yml
-     * @param string $object documents|assets|countries|themes|organisations|region
+     * @param string $object documents|assets|countries|themes|organisations|regions
      *
      * @Route(
      *      "/{graph}/search/{object}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      }
      * )
      * @Method({"GET", "HEAD", "OPTIONS"})
@@ -172,7 +172,7 @@ class GetController extends APIController
         );
         $factoryClass = $entfactories['get'][$object];
 
-        $response = $this->chomp($graph, $spql, $factoryClass, $builder);
+        $response = $this->chomp($graph, $spql, $factoryClass, $builder, $format, $object);
 
         return $this->response($response);
     }
