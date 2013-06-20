@@ -128,7 +128,7 @@ class GetController extends APIController
         );
         $factoryClass = $entfactories['get'][$object];
 
-        $response = $this->chomp($graph, $spql, $factoryClass, $builder);
+        $response = $this->chomp($graph, $spql, $factoryClass, $builder, $format, $object);
 
         return $this->response($response);
     }
