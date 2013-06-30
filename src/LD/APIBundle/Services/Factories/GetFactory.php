@@ -330,7 +330,101 @@ class GetFactory extends BaseFactory
         
         
      }
+
      
+    /**
+     * Parse the results and build the response data array
+     *
+     * @param mixed  $rdf  An EasyRDF object containing the results of a construct query
+     * @param string $graph The name of the graph it use.
+     *
+     * @return array
+     */
+     function getThemes($rdf, $graph, $type, $format) {
+        $data = $rdf['default'];
+        if(array_key_exists('count',$rdf)) {
+            $count = $rdf['count'];       
+        
+            //First we get our counts
+            foreach($count as $row) {
+                $total_results = $row->count->getValue();
+            }
+            $metadata = $this->buildMetaData($total_results);
+            $single_theme = false;
+        } else {
+            $single_theme = true;
+        }     
+        
+        
+        if($data->isEmpty()) {
+            return array();
+        }
+        
+        $results = array();
+        
+        foreach($data->allOfType("skos:Concept") as $theme) {
+            
+            $theme_doc = array();
+            $theme_doc['linked_data_uri'] = $theme->getUri();   
+            
+            if($theme->hasProperty("dcterms:identifer")) {
+                $identifier = $theme->get("dcterms:identifier")->getValue();
+            } else { 
+                $identifier = explode('/',parse_url($theme->getUri(),PHP_URL_PATH));
+                $identifier = array_pop($identifier);
+            }
+            
+            $theme_doc['object_id'] = $identifier;
+            $theme_doc['object_type'] = 'theme';
+            $theme_doc['title'] = $theme->get("rdfs:label")->getValue();
+            $theme_doc['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$graph."/get/themes/".$identifier."/full/".$this->stringToURL($theme->get("rdfs:label")->getValue());
+            
+            if($format == 'full') {
+                $theme_doc['site'] = $graph;
+                $theme_doc['children_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$graph."/get_children/themes/".$identifier."/full/";                
+                $theme_doc['name'] = $theme->get("rdfs:label")->getValue();
+            
+            
+                # Right now we can't include top-parent details, as the query is too expensive. However, if we could then we would look for a parent that was TopConcept and use it's details.
+                foreach($theme->allResources("skos:narrower") as $child) {
+                    $child_doc = array();
+                    $child_doc['object_name'] = $child->get("rdfs:label")->getValue();
+                    if($child->hasProperty("http://linked-development.org/extra#level")) {
+                        $child_doc['level'] = $child->get("<http://linked-development.org/extra#level>")->getValue();
+                    }
+
+                    if($child->hasProperty("dcterms:identifer")) {
+                         $child_id = $child->get("dcterms:identifier")->getValue();
+                    } else { 
+                        $child_id = explode('/',parse_url($child->getUri(),PHP_URL_PATH));
+                        $child_id = array_pop($child_id);
+                    }
+                    $child_doc['object_id'] = $child_id;
+                    $child_doc['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$graph."/get/themes/".$child_id."/full/".$this->stringToURL($child->get("rdfs:label")->getValue());
+                    $child_doc['linked_data_url'] = $child->getUri();
+                    $child_doc['object_type'] = 'theme';
+
+                    $theme_doc['children_object_array']['child'][] = $child_doc;
+                }
+                //Add sorting by level to the children (function for $this->compareLevel() started below).
+            
+            }
+        
+            
+            $results[] = $theme_doc;
+        }
+        
+       // print $data->dump();
+        
+        
+        
+        if($single_theme) {
+            return array("results"=>$results);
+        } else {
+            return array("results"=>$results, "metadata"=>$metadata);
+        }
+        
+     }
 
     /**
      * Format the data held by this factory ready to be output by the API.
@@ -363,4 +457,11 @@ class GetFactory extends BaseFactory
         return str_replace(" ","_",$string);        
     }
 
+   /**
+    * Array sort callback for sorting by level
+    */    
+    public function compareLevel($a, $b) {
+        print $a;
+        
+    }
 }

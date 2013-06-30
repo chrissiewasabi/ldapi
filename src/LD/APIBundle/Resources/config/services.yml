@@ -632,16 +632,72 @@ parameters:
         themes:
           queries:
             count:
-              define:
-              select:
-              where:  
-            default:
-              define: ~
-              select: select distinct ?theme ?a ?b
+              unlimited: true
+              define: >
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX bibo: <http://purl.org/ontology/bibo/>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+              select: SELECT COUNT(distinct ?theme) as ?count 
               where: >
-                where {?article <http://purl.org/dc/terms/subject> ?theme .
-                    ?theme ?a ?b .
-                } order by ?theme
+                WHERE { ?theme a skos:Concept. }
+            default:
+              define: >
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX bibo: <http://purl.org/ontology/bibo/>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+              select: >
+                CONSTRUCT {
+                   ?theme a skos:Concept.
+                   ?theme rdfs:label ?themetitle.
+                   ?theme dcterms:identifier ?themeID.
+                   ?theme skos:topConceptOf ?conceptscheme.
+                   ?theme skos:narrower ?child.
+                   ?child rdfs:label ?child_title.
+                   ?child dcterms:identifier ?childID.
+                   ?child_level <http://linked-development.org/extra#level> ?level.
+                   ?parent rdfs:label ?parent_title.
+                   ?parent dcterms:identifier ?parentID.
+                   ?parent_level <http://linked-development.org/extra#level> ?plevel.
+                }
+              where: >
+                WHERE {
+                  { 
+                    SELECT distinct ?theme WHERE {
+                       #Only fetch themes that are in use
+                       ?article dcterms:subject ?theme.
+                       OPTIONAL { ?theme skos:topConceptOf ?scheme. }
+                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__ 
+                  }
+                    
+                    { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
+                    
+                    
+                    OPTIONAL {
+                      ?theme dcterms:identifier ?themeID.
+                    } 
+                    
+                    OPTIONAL {
+                      ?theme skos:topConceptOf ?conceptscheme.
+                    }
+                    OPTIONAL {
+                      ?theme skos:narrower ?child OPTION (transitive, t_step (?theme) as ?child_level, t_step("step_no") as ?level).
+                      { ?child rdfs:label ?child_title. } UNION { ?child skos:prefLabel ?child_title. FILTER(lang(?child_title) = "en" || lang(?child_title) = "") }
+                      OPTIONAL { ?child dcterms:identifier ?childID. }
+                    }
+                    
+                    # Omitting this for now as the query is too expensive. We might be able to build indexes to speed it up?
+                    # ToDo: explore query optimisations.
+                    #OPTIONAL {
+                    #  ?theme skos:broader ?child OPTION (transitive, t_step (?theme) as ?parent_level, t_step("step_no") as ?plevel).
+                    #  ?parent rdfs:label ?parent_title.
+                    #  ?parent dcterms:identifier ?parentID.    
+                    #} 
+                    
+                } 
         countries:
             queries:
               count:
@@ -662,7 +718,7 @@ parameters:
                               FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
                            
                      -- FILTER
-                  } 
+                  }               
               default:
                 define: >
                   PREFIX dcterms: <http://purl.org/dc/terms/>
