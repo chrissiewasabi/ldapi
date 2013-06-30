@@ -21,7 +21,7 @@ class DefaultFactory extends BaseFactory
         return $this->data = array(
             'object_id' => $object,
             'object_name' => 'Unkown object',
-            'metadata_url' => $this->getContainer()->get('router')->generate('ld_api_api_index'),
+            'metadata_url' => $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true),
             'data' => $data,
         );
     }
@@ -48,4 +48,4 @@ class DefaultFactory extends BaseFactory
                 break;
         }
     }
-
+}

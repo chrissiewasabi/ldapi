@@ -44,6 +44,7 @@ class APIController extends Controller
      */
     protected function chomp($graph, $spql, $factoryclass, $querybuilder, $format = 'short', $type = null)
     {
+        
         // get the sparql service
         $spqlsrvc = $this->get('sparql');
 
@@ -64,7 +65,7 @@ class APIController extends Controller
 
         $factory = new $factoryclass();
         $factory->setContainer($this->container);
-        $factory->process($data, $type);
+        $factory->process($data, $type, $graph, $format);
         $response = $factory->getResponse($format);
 
         return $response;

@@ -20,24 +20,43 @@ class SearchController extends APIController
 {
     /**
      * @param string $graph  the graph to use, see service.yml
-     * @param string $object documents|assets|countries|themes|organisations|region
-     * @param string $id     the object id
+     * @param string $object documents|assets|countries|themes|organisations|regions
+     * @param string $format short|full
      *
      * @Route(
-     *      "/{graph}/search/{object}/{id}",
+     *      "/{graph}/search/{object}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|region",
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/search/{object}/",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/search/{object}/{format}",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *      }
+     * )
+     * @Route(
+     *      "/{graph}/search/{object}/{format}/",
+     *      requirements={
+     *          "object" = "documents|assets|countries|themes|organisations|regions",
      *      }
      * )
      * @Method({"GET", "HEAD", "OPTIONS"})
      * @return Response
      */
-    public function searchAction($graph, $object, $id)
+    public function searchAction($graph, $object, $format = 'short')
     {
+        
         // get and set  the query factory
         $querybuilders = $this->container->getParameter('querybuilder');
-        if (isset($querybuilders['search'][$object])) {
-            $builder = $querybuilders['get'][$object];
+        if (isset($querybuilders['get_all'][$object])) {
+            $builder = $querybuilders['get_all'][$object];
         } elseif (isset($querybuilders['default'])) {
             $builder = $querybuilders['default'];
         } else {
@@ -49,7 +68,7 @@ class SearchController extends APIController
         $this->container->get('logger')->info(
             sprintf('Fetching sparql: get->%s', $object)
         );
-        $spql = $spqls['get'][$object];
+        $spql = $spqls['get_all'][$object];
 
         // fetch factory
         $entfactories = $this->container->getParameter('factories');
@@ -58,8 +77,9 @@ class SearchController extends APIController
         );
         $factoryClass = $entfactories['get'][$object];
 
-        $response = $this->chomp($graph, $spql, $factoryClass, $builder);
+        $response = $this->chomp($graph, $spql, $factoryClass, $builder, $format, $object);
 
         return $this->response($response);
     }
+   
 }

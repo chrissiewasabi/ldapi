@@ -61,4 +61,42 @@ class DefaultQueryBuilder extends AbstractQueryBuilder
 
         return $query;
     }
+    
+    /**
+     * Check the http query for how many objects to return
+     *
+     * @param Request $req The request object, if null Request::createFromGlobals will be used to create a new one
+     *
+     * @access protected
+     * @return integer
+     */
+    protected function getLimit(Request $req = null)
+    {
+        $_req = ($req) ? $req : Request::createFromGlobals();
+
+        return $_req->query->get(
+            'num_results',
+            $this->container->getParameter('sparql_default_limit')
+        );
+        // num_results=10&start_offset=10",
+    }
+
+    /**
+     * Check the http query for offset to start returning objects from
+     *
+     * @param Request $req The request object, if null Request::createFromGlobals will be used to create a new one
+     *
+     * @access protected
+     * @return integer
+     */
+    protected function getOffset(Request $req = null)
+    {
+        $_req = ($req) ? $req : Request::createFromGlobals();
+
+        return $_req->query->get(
+            'start_offset',
+            $this->container->getParameter('sparql_default_offset') // I can't see why this won't always be zero
+        );
+
+    }
 }

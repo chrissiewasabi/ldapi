@@ -36,10 +36,10 @@ parameters:
       get:
         documents: LD\APIBundle\Services\QueryBuilders\GetQueryBuilder
         assets: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
-        countries: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
+        countries: LD\APIBundle\Services\QueryBuilders\CountryQueryBuilder
         themes: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         organisations: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
-        region: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
+        regions: LD\APIBundle\Services\QueryBuilders\CountryQueryBuilder
       get_all:
         documents: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         themes: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
@@ -373,13 +373,20 @@ parameters:
                 define: >
                   PREFIX dcterms: <http://purl.org/dc/terms/>
                   PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                  PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
                 select: >
                   CONSTRUCT {
+                    ?country a skos:Concept.
                     ?country fao:codeISO2 ?iso2.
                     ?country rdfs:label ?countrytitle.
                     ?country dcterms:identifier ?countryID.
                     ?country fao:codeUN ?uncode.
                     ?country fao:codeISO3 ?iso3.
+                    ?country fao:isInGroup ?region.
+                    ?region rdfs:label ?regiontitle.
+                    ?region dcterms:identifier ?regionID.
+                    ?region fao:codeUN ?regionuncode.
+                    ?region a fao:geographical_region.
                   }
                 where: >
                    WHERE { 
@@ -392,8 +399,21 @@ parameters:
                       } 
                       OPTIONAL { ?country dcterms:identifier ?countryID. }
                       OPTIONAL { ?country fao:codeUN ?uncode.}
-                      OPTIONAL { ?country fao:codeISO3 ?iso3.} 
-                    }
+                      OPTIONAL { ?country fao:codeISO3 ?iso3.}
+                      OPTIONAL { 
+                        ?country fao:isInGroup ?region.
+                        ?region a fao:geographical_region.
+                        { 
+                         ?region rdfs:label ?regiontitle.
+                        } UNION {
+                         ?region fao:nameList ?regiontitle.
+                         FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
+                        } 
+                        OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                        OPTIONAL { ?region fao:codeUN ?regionuncode. }
+                      }
+                      FILTER(str(?iso2) = "__ID__" || str(?countrytitle) = "__NAME__" || str(?countryID) = "__ID__")
+                    } 
         themes:
             queries:
               default:
@@ -412,15 +432,33 @@ parameters:
                   where {
                     <http://linked-development.org/eldis/organisation/A64953/> ?a ?b .
                   }
-        region:
+        regions:
             queries:
               default:
-                define: ~
-                select: select ?a ?b
-                where: >
-                  where {
-                      <http://linked-development.org/eldis/regions/C30/> ?a ?b .
+                define: >
+                  PREFIX dcterms: <http://purl.org/dc/terms/>
+                  PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                  PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                select: >
+                  CONSTRUCT {
+                    ?region rdf:type fao:geographical_region.
+                    ?region rdfs:label ?regiontitle.
+                    ?region dcterms:identifier ?regionID.
+                    ?region fao:codeUN ?uncode.
                   }
+                where: >
+                   WHERE { 
+                      ?region a fao:geographical_region.
+                      { 
+                         ?region rdfs:label ?regiontitle.
+                      } UNION {
+                         ?region fao:nameList ?regiontitle.
+                         FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
+                      } 
+                      OPTIONAL { ?region dcterms:identifier ?regionID. }
+                      OPTIONAL { ?region fao:codeUN ?uncode.} 
+                      FILTER(str(?uncode) = "__ID__" || str(?regionID) = "__ID__" || str(?regiontitle) = "__NAME__")
+                    }
       # Get all
       get_all:
         documents:
@@ -592,13 +630,18 @@ parameters:
                     }
                   }
         themes:
-          default:
-            define: ~
-            select: select distinct ?theme ?a ?b
-            where: >
-              where {?article <http://purl.org/dc/terms/subject> ?theme .
-                  ?theme ?a ?b .
-              } order by ?theme
+          queries:
+            count:
+              define:
+              select:
+              where:  
+            default:
+              define: ~
+              select: select distinct ?theme ?a ?b
+              where: >
+                where {?article <http://purl.org/dc/terms/subject> ?theme .
+                    ?theme ?a ?b .
+                } order by ?theme
         countries:
             queries:
               count:
@@ -611,6 +654,14 @@ parameters:
                  where: >
                   WHERE {
                     ?country fao:codeISO2 ?iso2.
+                     ++ FILTER 
+                              ?country fao:isInGroup ?region.
+                              
+                              OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                              OPTIONAL { ?region fao:codeUN ?regionuncode. }
+                              FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
+                           
+                     -- FILTER
                   } 
               default:
                 define: >
@@ -625,10 +676,28 @@ parameters:
                     ?country dcterms:identifier ?countryID.
                     ?country fao:codeUN ?uncode.
                     ?country fao:codeISO3 ?iso3.
+                    ?country fao:isInGroup ?region.
+                    ?region rdfs:label ?regiontitle.
+                    ?region dcterms:identifier ?regionID.
+                    ?region fao:codeUN ?regionuncode.
+                    ?region a fao:geographical_region.
                   }
                 where: >
                    WHERE { 
-                      ?country fao:codeISO2 ?iso2.
+                      { 
+                        SELECT ?country ?iso2 WHERE { 
+                           ?country fao:codeISO2 ?iso2.
+                           ++ FILTER 
+                              ?country fao:isInGroup ?region.
+                              
+                              OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                              OPTIONAL { ?region fao:codeUN ?regionuncode. }
+                              FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
+                           
+                           -- FILTER
+                         } LIMIT __LIMIT__ OFFSET __OFFSET__
+                      }  
+                      
                       { 
                          ?country rdfs:label ?countrytitle.
                       } UNION {
@@ -638,7 +707,19 @@ parameters:
                       OPTIONAL { ?country dcterms:identifier ?countryID. }
                       OPTIONAL { ?country fao:codeUN ?uncode.}
                       OPTIONAL { ?country fao:codeISO3 ?iso3.} 
-                    }
+                      OPTIONAL { 
+                        ?country fao:isInGroup ?region.
+                        ?region a fao:geographical_region.
+                        { 
+                         ?region rdfs:label ?regiontitle.
+                        } UNION {
+                         ?region fao:nameList ?regiontitle.
+                         FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
+                        } 
+                        OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                        OPTIONAL { ?region fao:codeUN ?regionuncode. }
+                      }
+                    } 
         regions:
             queries:
               count:

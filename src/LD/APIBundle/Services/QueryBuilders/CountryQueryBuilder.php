@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Wrapper to making easy rdf sparql queries
  */
-class GetQueryBuilder extends DefaultQueryBuilder
+class CountryQueryBuilder extends DefaultQueryBuilder
 {
     /**
      * Build a sparql query.
@@ -42,28 +42,20 @@ class GetQueryBuilder extends DefaultQueryBuilder
         $params = $request->attributes->get('_route_params');
         $this->container->get('logger')->info(json_encode($params));
         $_id = $params['id'];
+        $_name = str_replace("_"," ",$params['name']);
 	$_graph = $params['graph'];
         
-        
-        
-        /** For now we base graph selection on the ID. 
-         * 
-         * ELDIS IDs start with A, whereas R4D are numerical.
-         * 
-         * Graph will already be respected by the graph query.
-         * 
-         */
-        if(substr($_id,0,1) == 'A') {
-            $uri = (string)$this->container->parameters["graphs"]["eldis"] . "output/" . $_id . "/";
-            
-        } else {
-            $uri = (string)$this->container->parameters["graphs"]["r4d"] . "output/" . $_id  . "/";
-        }
+        $query = parent::createQuery($elements, $graph);
         
         $query = str_replace(
-            '__URI__',
-            $uri,
-            parent::createQuery($elements, $graph)
+            '__ID__',
+            $_id,
+            $query
+        );
+        $query = str_replace(
+            '__NAME__',
+            $_name,
+            $query
         );
 
         return $query;

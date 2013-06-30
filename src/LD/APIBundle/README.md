@@ -118,6 +118,4 @@ See the APIController api docs for more details.
 
 ## Not yet implemented
 
-### `Pagination`
-
-Should not be difficult.
+### Result counts (on search etc)
