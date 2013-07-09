@@ -55,7 +55,6 @@ class GetFactory extends BaseFactory
      */
     
     function getDocuments($rdf, $graph, $type, $format) {
-        echo $format;
         
         $data = $rdf['default'];
         
@@ -104,7 +103,7 @@ class GetFactory extends BaseFactory
 
                     } else {
                         //If we have the UN identifier we use that
-                        $coverageID = $coverage->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN") ? "UN".$coverage->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN>")->getValue() : $coverage->get("dcterms:identifier")->getValue();                                   
+                        $coverageID = $coverage->hasProperty("http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN") ? "UN".$coverage->get("<http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/codeUN>")->getValue() : ($coverage->hasProperty("dcterms:identifier") ? $coverage->get("dcterms:identifier")->getValue() : "");                                   
                         $document['category_region_array']->Region[] = array("archived"=>"false",
                                                                               "deleted"=>"0",
                                                                               "metadata_url"=> $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$graph."/get/regions/".$coverageID."/full",
