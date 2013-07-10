@@ -237,7 +237,7 @@ class APIController extends Controller
      * @return string
      */
     protected function _getURL($format = '') {
-        $base = $_SERVER['PHP_SELF'];
+        $base = $_SERVER['REQUEST_URI'];
         $querystring = $_GET;
         if($format) {
             $querystring['format'] = $format;
