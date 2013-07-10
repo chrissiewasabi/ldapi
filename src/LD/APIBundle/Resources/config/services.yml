@@ -554,7 +554,7 @@ parameters:
                             }
                             ?countryURI fao:codeISO2 ?iso2.
                             OPTIONAL { ?countryURI dcterms:identifier ?country_identifier. }
-                           FILTER(regex(?country,'^__country__$','i') || regex(?iso2,'^__country__$') || regex(?country_identifier,'^__country__$'))
+                           FILTER(regex(str(?iso2) ='__country__' || str(?country_identifier) = '__country__') || ?country,'^__country__$','i'))
                         -- FILTER 
                         ++ FILTER  
                         #Region filter
@@ -568,7 +568,7 @@ parameters:
                             }
                             OPTIONAL { ?regionURI fao:codeUN ?region_UN. }
                             OPTIONAL { ?regionURI dcterms:identifier ?region_identifier. }
-                           FILTER(regex(?region,'__region__','i') || regex(?region_UN,'^__region__$') || regex(?region_identifier,'^__region__$'))
+                           FILTER(str(?region_UN) ='__region__' || str(?region_identifier) = '__region__' || regex(?region,'__region__','i'))
                         -- FILTER 
                         ++ FILTER  
                         #Theme filter - we cannot support theme path
