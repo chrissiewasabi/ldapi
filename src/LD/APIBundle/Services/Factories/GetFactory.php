@@ -341,6 +341,7 @@ class GetFactory extends BaseFactory
      */
      function getThemes($rdf, $graph, $type, $format) {
         $data = $rdf['default'];
+        
         if(array_key_exists('count',$rdf)) {
             $count = $rdf['count'];       
         
@@ -366,7 +367,9 @@ class GetFactory extends BaseFactory
             $theme_doc = array();
             $theme_doc['linked_data_uri'] = $theme->getUri();   
             
-            if($theme->hasProperty("dcterms:identifer")) {
+            
+            
+            if($theme->hasProperty("dcterms:identifier")) {
                 $identifier = $theme->get("dcterms:identifier")->getValue();
             } else { 
                 $identifier = explode('/',parse_url($theme->getUri(),PHP_URL_PATH));
@@ -392,7 +395,7 @@ class GetFactory extends BaseFactory
                         $child_doc['level'] = $child->get("<http://linked-development.org/extra#level>")->getValue();
                     }
 
-                    if($child->hasProperty("dcterms:identifer")) {
+                    if($child->hasProperty("dcterms:identifier")) {
                          $child_id = $child->get("dcterms:identifier")->getValue();
                     } else { 
                         $child_id = explode('/',parse_url($child->getUri(),PHP_URL_PATH));
@@ -406,6 +409,25 @@ class GetFactory extends BaseFactory
                     $theme_doc['children_object_array']['child'][] = $child_doc;
                 }
                 //Add sorting by level to the children (function for $this->compareLevel() started below).
+                
+                foreach($theme->allResources("skos:broader") as $parent) { 
+                    $parent_doc = array();
+                    $parent_doc['object_name'] = $parent->get("rdfs:label")->getValue();
+                    
+                    if($parent->hasProperty("dcterms:identifier")) {
+                         $parent_id = $parent->get("dcterms:identifier")->getValue();
+                    } else { 
+                        $parent_id = explode('/',parse_url($parent->getUri(),PHP_URL_PATH));
+                        $parent_id = array_pop($parent_id);
+                    }
+                    $parent_doc['object_id'] = $parent_id;
+                    $parent_doc['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$graph."/get/themes/".$parent_id."/full/".$this->stringToURL($parent->get("rdfs:label")->getValue());
+                    $parent_doc['linked_data_url'] = $parent->getUri();
+                    $parent_doc['object_type'] = 'theme';
+
+                    $theme_doc['parent_object_array']['parent'][] = $parent_doc;
+                }
+                
             
             }
         

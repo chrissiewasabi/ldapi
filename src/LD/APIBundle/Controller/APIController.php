@@ -154,10 +154,17 @@ class APIController extends Controller
      */
     protected function _encodeHtml($data)
     {
+        
+        $output = defined('JSON_PRETTY_PRINT') ? json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : json_encode($data);
+        $output = preg_replace('@(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>', $output);
+        
         $response = $this->render(
             'LDAPIBundle:API:response.html.twig',
             array(
-                'json' => $this->_toJson($data),
+                'format_json' => $this->_getURL('json'),
+                'format_xml' => $this->_getURL('xml'),
+                'format_html' => $this->_getURL(''),                
+                'json' => $output,
             )
         );
         $response->headers->set('Content-type', 'text/html');
@@ -174,15 +181,10 @@ class APIController extends Controller
      */
     protected function _encodeXhtml($data)
     {
-        $response = $this->render(
-            'LDAPIBundle:API:response.xhtml.twig',
-            array(
-                'json' => $this->_toJson($data),
-            )
-        );
+       
         $response->headers->set('Content-type', 'application/xhtml+xml');
 
-        return $response;
+        return $this->_encodeHtml($data);
     }
 
     /**
@@ -225,5 +227,26 @@ class APIController extends Controller
         }
 
         return false;
+    }
+    
+    /**
+     * Get current page path and add the format parameter
+     *
+     * @param string $accepts The Accepts string
+     *
+     * @return string
+     */
+    protected function _getURL($format = '') {
+        $base = $_SERVER['PHP_SELF'];
+        $querystring = $_GET;
+        if($format) {
+            $querystring['format'] = $format;
+        } else {
+            unset($querystring['format']);
+        }
+        
+        $url = $base . "?". http_build_query($querystring);
+        
+        return $url;
     }
 }

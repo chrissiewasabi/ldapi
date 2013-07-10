@@ -1,6 +1,7 @@
 {% extends 'LDAPIBundle::base.html.twig' %}
 
 {% block main %}
-    <h1>TODO: style this</h1>
-    <pre id='api-response'>{{ json }}</pre>
+    <h1>Query results</h1>
+    <p>[ <a href='{{ format_json }}'>json</a> | <a href="{{ format_xml }}">xml</a> | <a href="{{ format_html }}">html</a> ]</p>
+    <pre id='api-response'>{{ json|raw }}</pre>
 {% endblock %}

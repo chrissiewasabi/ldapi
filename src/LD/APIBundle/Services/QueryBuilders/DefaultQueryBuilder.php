@@ -48,7 +48,7 @@ class DefaultQueryBuilder extends AbstractQueryBuilder
         if ($graph && $graph != 'all') {
             $from = " from <" . $graph . '>';
         } else {
-            $from = '';
+            $from = "";
         }
 
         $_where = $elements['where'];

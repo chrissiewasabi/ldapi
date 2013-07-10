@@ -152,4 +152,64 @@ class GetController extends APIController
         return $this->response($response);
     }
     
+    
+    /**
+     * @param string $graph  the graph to use, see service.yml
+     * @param string $object documents|assets|countries|themes|organisations|region
+     * @param string $format     required format
+     * 
+     * @Route(
+     *      "/{graph}/get_children/{object}/{id}",
+     *      requirements={
+     *          "object" = "themes",
+     *      }
+     * )
+     * 
+     * @Route(
+     *      "/{graph}/get_children/{object}/{id}/{format}",
+     *      requirements={
+     *          "object" = "themes",
+     *      }
+     * )
+     * 
+     * @Route(
+     *      "/{graph}/get_children/{object}/{id}/{format}/",
+     *      requirements={
+     *          "object" = "themes",
+     *      }
+     * )
+     * @Method({"GET", "HEAD", "OPTIONS"})
+     * @return Response
+     */
+    public function getChildrenAction($graph, $object, $id = null, $format = 'short')
+    {
+        // get and set  the query factory
+        $querybuilders = $this->container->getParameter('querybuilder');
+        if (isset($querybuilders['get_children'][$object])) {
+            $builder = $querybuilders['get_children'][$object];
+        } elseif (isset($querybuilders['default'])) {
+            $builder = $querybuilders['default'];
+        } else {
+            $builder = 'LD\APIBundle\Services\ids\DefaultQueryBuilder';
+        }
+
+        // get the sparql
+        $spqls = $this->container->getParameter('sparqls');
+        $this->container->get('logger')->info(
+            sprintf('Fetching sparql: get->%s', $object)
+        );
+        $spql = $spqls['get_children'][$object];
+
+        // fetch factory
+        $entfactories = $this->container->getParameter('factories');
+        $this->container->get('logger')->info(
+            sprintf('Fetching factory: get->%s', $object)
+        );
+        $factoryClass = $entfactories['get'][$object];
+
+        $response = $this->chomp($graph, $spql, $factoryClass, $builder, $format, $object);
+
+        return $this->response($response);
+    }
+    
 }

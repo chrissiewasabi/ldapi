@@ -37,12 +37,14 @@ parameters:
         documents: LD\APIBundle\Services\QueryBuilders\GetQueryBuilder
         assets: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         countries: LD\APIBundle\Services\QueryBuilders\CountryQueryBuilder
-        themes: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
+        themes: LD\APIBundle\Services\QueryBuilders\ThemeQueryBuilder
         organisations: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         regions: LD\APIBundle\Services\QueryBuilders\CountryQueryBuilder
       get_all:
         documents: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         themes: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
+      get_children:
+        themes: LD\APIBundle\Services\QueryBuilders\ThemeQueryBuilder
       default: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
 
     factories:
@@ -417,12 +419,49 @@ parameters:
         themes:
             queries:
               default:
-                define: ~
-                select: select distinct  ?a ?b
-                where: >
-                  where {
-                    <http://linked-development.org/eldis/themes/C1310/> ?a ?b .
+                define: >
+                  PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                  PREFIX dcterms: <http://purl.org/dc/terms/>
+                  PREFIX bibo: <http://purl.org/ontology/bibo/>
+                  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                  PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                select: >
+                  CONSTRUCT {
+                     ?theme a skos:Concept.
+                     ?theme rdfs:label ?themetitle.
+                     ?theme dcterms:identifier ?themeID.
+                     ?theme skos:topConceptOf ?conceptscheme.
+                     ?theme skos:narrower ?child.
+                     ?child rdfs:label ?child_title.
+                     ?child dcterms:identifier ?childID.
+                     ?child_level <http://linked-development.org/extra#level> ?level.
+                     ?parent rdfs:label ?parent_title.
+                     ?parent dcterms:identifier ?parentID.
+                     ?parent_level <http://linked-development.org/extra#level> ?plevel.
                   }
+                where: >
+                  WHERE {
+                    { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
+                    OPTIONAL {
+                        ?theme dcterms:identifier ?themeID.
+                      } 
+                    OPTIONAL {
+                        ?theme skos:topConceptOf ?conceptscheme.
+                      }
+                      OPTIONAL {
+                        ?theme skos:narrower ?child OPTION (transitive, t_step (?theme) as ?child_level, t_step("step_no") as ?level).
+                        { ?child rdfs:label ?child_title. } UNION { ?child skos:prefLabel ?child_title. FILTER(lang(?child_title) = "en" || lang(?child_title) = "") }
+                        OPTIONAL { ?child dcterms:identifier ?childID. }
+                      }
+                      # Omitting this for now as the query is too expensive. We might be able to build indexes to speed it up?
+                      # ToDo: explore query optimisations.
+                      #OPTIONAL {
+                      #  ?theme skos:broader ?child OPTION (transitive, t_step (?theme) as ?parent_level, t_step("step_no") as ?plevel).
+                      #  ?parent rdfs:label ?parent_title.
+                      #  ?parent dcterms:identifier ?parentID.    
+                      #} 
+                      FILTER(str(?themeID) = "__ID__" || ?theme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?theme = <http://dbpedia.org/resource/__ID__>)
+                  } 
         organisations:
             queries:
               default:
@@ -533,10 +572,9 @@ parameters:
                         -- FILTER 
                         ++ FILTER  
                         #Theme filter - we cannot support theme path
-                            ?resource dcterms:subject ?subject.
-                            ?subject rdfs:label ?subjectTitle.
-                            OPTIONAL { ?subject dcterms:identifier ?subjectID. }
-                           FILTER(regex(?subjectTitle,'^__subject__$','i') || regex(?subjectID,'^__subject__$'))
+                            ?resource dcterms:subject ?theme.
+                            OPTIONAL { ?theme dcterms:identifier ?themeID. }
+                            FILTER(str(?themeID) = "__theme__" || ?theme = <http://aims.fao.org/aos/agrovoc/__theme__> || ?theme = <http://dbpedia.org/resource/__theme__>)
                         -- FILTER 
                         ++ FILTER  
                         #Query filter. In future we should use advanced features of Virutoso to address 
@@ -813,3 +851,69 @@ parameters:
                       OPTIONAL { ?region dcterms:identifier ?regionID. }
                       OPTIONAL { ?region fao:codeUN ?uncode.} 
                     }
+# Get all
+      get_children:
+        themes:
+          queries:
+            count:
+              unlimited: true
+              define: >
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX bibo: <http://purl.org/ontology/bibo/>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+              select: SELECT COUNT(distinct ?theme) as ?count 
+              where: >
+                WHERE { ?theme a skos:Concept. 
+                       ?theme skos:broader ?parentTheme.
+                       OPTIONAL { ?parentTheme dcterms:identifier ?parentID. }
+                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)                       
+                }
+            default:
+              define: >
+                PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                PREFIX bibo: <http://purl.org/ontology/bibo/>
+                PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+              select: >
+                CONSTRUCT {
+                   ?theme a skos:Concept.
+                   ?theme rdfs:label ?themetitle.
+                   ?theme dcterms:identifier ?themeID.
+                   ?theme skos:topConceptOf ?conceptscheme.
+                   ?theme skos:narrower ?child.
+                   ?theme skos:broader ?parent.
+                   ?parent rdfs:label ?parent_title.
+                   ?parent dcterms:identifier ?parentID.
+                   ?theme skos:inScheme ?scheme.
+                }
+              where: >
+                WHERE {
+                  { 
+                    SELECT distinct ?theme WHERE {
+                       ?theme a skos:Concept.
+                       ?theme skos:broader ?parentTheme.
+                       OPTIONAL { ?parentTheme dcterms:identifier ?parentID. }
+                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)                       
+                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__ 
+                  }
+                    
+                    { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
+                    
+                    ?theme skos:broader ?parent.
+                    { ?parent rdfs:label ?parent_title. } UNION { ?parent skos:prefLabel ?parent_title. FILTER(lang(?parent_title) = "en" || lang(?parent_title) = "") }
+                    OPTIONAL {
+                      ?parent dcterms:identifier ?parentID.
+                    }
+                    OPTIONAL {
+                      ?theme dcterms:identifier ?themeID.
+                    } 
+                    OPTIONAL {
+                      ?theme skos:topConceptOf ?conceptscheme.
+                    }
+                    OPTIONAL {
+                      ?theme skos:inScheme ?scheme. 
+                    }
+                } 
