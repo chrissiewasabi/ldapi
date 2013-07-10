@@ -554,7 +554,7 @@ parameters:
                             }
                             ?countryURI fao:codeISO2 ?iso2.
                             OPTIONAL { ?countryURI dcterms:identifier ?country_identifier. }
-                           FILTER(regex(str(?iso2) ='__country__' || str(?country_identifier) = '__country__') || ?country,'^__country__$','i'))
+                           FILTER(str(?iso2) ='__country__' || str(?country_identifier) = '__country__') || regex(?country,'^__country__$','i'))
                         -- FILTER 
                         ++ FILTER  
                         #Region filter
