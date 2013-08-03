@@ -35,6 +35,7 @@ parameters:
           country: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
       get:
         documents: LD\APIBundle\Services\QueryBuilders\GetQueryBuilder
+        research_outputs: LD\APIBundle\Services\QueryBuilders\GetQueryBuilder
         assets: LD\APIBundle\Services\QueryBuilders\DefaultQueryBuilder
         countries: LD\APIBundle\Services\QueryBuilders\CountryQueryBuilder
         themes: LD\APIBundle\Services\QueryBuilders\ThemeQueryBuilder
@@ -59,6 +60,7 @@ parameters:
           country: LD\APIBundle\Services\Factories\CountFactory
       get:
         documents: LD\APIBundle\Services\Factories\GetFactory
+        research_outputs: LD\APIBundle\Services\Factories\GetFactory
         assets: LD\APIBundle\Services\Factories\GetFactory
         countries: LD\APIBundle\Services\Factories\GetFactory
         themes: LD\APIBundle\Services\Factories\GetFactory
@@ -369,6 +371,26 @@ parameters:
                   where {
                     <http://linked-development.org/eldis/output/__ID__/> ?a ?b .
                   }
+        research_outputs:
+          queries:
+              select:
+                unlimited: true
+                define: >
+                    PREFIX dcterms: <http://purl.org/dc/terms/>
+                    PREFIX bibo: <http://purl.org/ontology/bibo/>
+                    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+                    PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
+                    PREFIX dbpedia: <http://dbpedia.org/ontology/>
+                select: >
+                  SELECT DISTINCT ?project ?projectTitle ?research ?title ?date 
+                where: >
+                   WHERE {
+                      ?project dcterms:identifier "__ID__".
+                      ?project dcterms:title ?projectTitle.
+                      ?research dcterms:isPartOf ?project.
+                      ?research dcterms:title ?title.
+                      ?research dcterms:date ?date.
+                   } ORDER BY DESC(?project) DESC(?date)             
         countries:
             queries:
               default:

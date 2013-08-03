@@ -28,7 +28,7 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get/{object}/{id}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *          "object" = "documents|assets|countries|themes|organisations|regions|research_outputs",
      *      },
      *      defaults={
      *          "format" = "short",
@@ -37,7 +37,7 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get/{object}/{id}/",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *          "object" = "documents|assets|countries|themes|organisations|regions|research_outputs",
      *      },
      *      defaults={
      *          "format" = "short",
@@ -46,19 +46,19 @@ class GetController extends APIController
      * @Route(
      *      "/{graph}/get/{object}/{id}/{format}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *          "object" = "documents|assets|countries|themes|organisations|regions|research_outputs",
      *      }
      * )
      * @Route(
      *      "/{graph}/get/{object}/{id}/{format}/",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *          "object" = "documents|assets|countries|themes|organisations|regions|research_outputs",
      *      }
      * )
      * @Route(
      *      "/{graph}/get/{object}/{id}/{format}/{name}",
      *      requirements={
-     *          "object" = "documents|assets|countries|themes|organisations|regions",
+     *          "object" = "documents|assets|countries|themes|organisations|regions|research_outputs",
      *      }
      * )
      * @Method({"GET", "HEAD", "OPTIONS"})

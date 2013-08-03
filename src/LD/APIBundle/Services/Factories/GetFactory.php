@@ -1,6 +1,6 @@
 <?php
 namespace LD\APIBundle\Services\Factories;
-
+use Symfony\Component\HttpFoundation\Request;
 use LD\APIBundle\Entity\Region;
 use LD\APIBundle\Entity\Theme;
 use LD\APIBundle\Entity\Country;
@@ -446,6 +446,106 @@ class GetFactory extends BaseFactory
         }
         
      }
+     
+     
+     /**
+     * Parse the results and build the response data array
+     *
+     * @param mixed  $rdf An EasyRDF object containing the results of a construct query
+     * @param string $graph The name of the graph it use.
+     *
+     * @return array
+     */
+    
+    function getResearch_outputs($rdf, $graph, $type, $format) {
+        
+        $_req = Request::createFromGlobals();
+        $per_project = $_req->query->get('per_project',5);
+        
+        $metadata = array();
+        $results = array();
+        $projects = array();
+        
+        $output_count = 0;
+        foreach($rdf['select'] as $row) {
+            
+            $project_id = (string)$row->project;
+            
+            if(!array_key_exists($project_id,$projects)) {
+                $projects[$project_id] = array();
+                $projects[$project_id]['title'] = $row->projectTitle->getValue();
+                $projects[$project_id]['linked_data_uri'] = (string)$row->project;
+                $projects[$project_id]['link'] = str_replace("http://linked-development.org/r4d/","http://r4d.dfid.gov.uk/",$row->project);
+                $projects[$project_id]['output_count'] = 0;
+                $projects[$project_id]['research_outputs'] = array();
+            }
+            
+            if(count($projects[$project_id]['research_outputs']) < $per_project) { 
+                
+                $output = array();
+
+                $resource_url = explode('/',parse_url($row->research,PHP_URL_PATH));
+                $resource_graph = $resource_url[1];
+                $resource_id = $resource_url[count($resource_url)-2];
+
+                $output['title'] = $row->title->getValue();
+                $output['object_type'] = 'document';
+                $output['linked_data_uri'] =(string)$row->research;
+                $output['link'] = str_replace("http://linked-development.org/r4d/","http://r4d.dfid.gov.uk/",$row->research);
+                $output['publication_date'] = $row->date->getValue();
+                $output['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$resource_graph."/get/documents/".$resource_id."/full";
+
+                $projects[$project_id]['research_outputs'][] = $output;
+                
+            }
+            $projects[$project_id]['output_count']++;
+            $output_count++;
+        }
+        
+        $metadata['total_outputs'] = $output_count;
+        
+        
+        
+        foreach($projects as $project) {
+            $results[] = $project;
+        }
+        
+        /*
+        foreach($data->allOfType("<http://dbpedia.org/ontology/ResearchProject>") as $project) {
+           $project_record = array();
+           $project_record['linked_data_uri'] = $project->getUri();   
+           $project_record['iati-parent'] = $project->get("dcterms:identifier")->getValue();
+           $project_record['title'] = $project->get("dcterms:title")->getValue();
+           $project_record['link'] = str_replace("http://linked-development.org/r4d/","http://r4d.dfid.gov.uk/",$project->getUri()) . "Default.aspx";
+           
+           $articles = array();
+           foreach($project->allResources("dcterms:hasPart") as $article) { 
+             $resource_url = explode('/',parse_url($article->getUri(),PHP_URL_PATH));
+             $resource_graph = $resource_url[1];
+             $resource_id = $resource_url[count($resource_url)-2];
+            
+               
+            $article_record = array();
+            $article_record['linked_data_uri'] = $article->getUri();
+            $article_record['title'] = $article->get("dcterms:title")->getValue();
+            $article_record['link'] = str_replace("http://linked-development.org/r4d/","http://r4d.dfid.gov.uk/",$project->getUri()) . "Default.aspx";
+
+            $article_record['metadata_url'] = $this->getContainer()->get('router')->generate('ld_api_api_index',array(),true).$resource_graph."/get/documents/".$resource_id."/full";
+            $article_record['publication_date'] = str_replace("T"," ",$article->get("dcterms:date")->getValue());
+            
+            $articles[] = $article_record;
+           }
+           $project_record['research_outputs'] = $articles;
+           
+           $results[] = $project_record;
+        } 
+        */
+        
+        return array("results"=>$results, "metadata"=>$metadata);
+        
+        
+    }
+     
 
     /**
      * Format the data held by this factory ready to be output by the API.
