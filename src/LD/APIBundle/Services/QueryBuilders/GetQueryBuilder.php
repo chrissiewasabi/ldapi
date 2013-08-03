@@ -71,7 +71,7 @@ class GetQueryBuilder extends DefaultQueryBuilder
         $query = str_replace(
             '__ID__',
             $_id,
-            parent::createQuery($elements, $graph)
+            $query
         );
 
         return $query;
