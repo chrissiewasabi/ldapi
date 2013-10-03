@@ -2,6 +2,10 @@ services:
     sparql:
         class: LD\APIBundle\Services\Sparql
         arguments: [%sparql_endpoint%, "@service_container"]
+    kernel.listener.your_listener_name:
+        class: LD\APIBundle\EventListener\LdapiExceptionListener
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception, method: onKernelException }
 
 parameters:
     # This translates the Accepts header into supported mime types
@@ -111,7 +115,7 @@ parameters:
                          }
                          FILTER(lang(?regionlabel) = 'en' || lang(?regionlabel) = '')
 
-                         } 
+                         }
           theme:
             # IDS example: http://api.ids.ac.uk/openapi/eldis/count/documents/theme
             # Note: the linked data API may return a very large list of themes here. We may wish to (a) sort the results by count; and (b) offer pagination
@@ -308,7 +312,7 @@ parameters:
                           ?subject rdfs:label ?subjectTitle.
                           OPTIONAL {
                               ?subject dcterms:identifier ?subjectID.
-                          } 
+                          }
                           OPTIONAL {
                               ?subjectParent skos:narrower ?subject.
                               # Uncomment out the line below to search up the category tree and give all the required steps for building a category path
@@ -382,7 +386,7 @@ parameters:
                     PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
                     PREFIX dbpedia: <http://dbpedia.org/ontology/>
                 select: >
-                  SELECT DISTINCT ?project ?projectTitle ?research ?title ?date 
+                  SELECT DISTINCT ?project ?projectTitle ?research ?title ?date
                 where: >
                    WHERE {
                       ?project dcterms:identifier "__ID__".
@@ -390,7 +394,7 @@ parameters:
                       ?research dcterms:isPartOf ?project.
                       ?research dcterms:title ?title.
                       ?research dcterms:date ?date.
-                   } ORDER BY DESC(?project) DESC(?date)             
+                   } ORDER BY DESC(?project) DESC(?date)
         countries:
             queries:
               default:
@@ -413,31 +417,31 @@ parameters:
                     ?region a fao:geographical_region.
                   }
                 where: >
-                   WHERE { 
+                   WHERE {
                       ?country fao:codeISO2 ?iso2.
-                      { 
+                      {
                          ?country rdfs:label ?countrytitle.
                       } UNION {
                          ?country fao:nameList ?countrytitle.
                          FILTER(lang(?countrytitle) = 'en' || lang(?countrytitle) = "")
-                      } 
+                      }
                       OPTIONAL { ?country dcterms:identifier ?countryID. }
                       OPTIONAL { ?country fao:codeUN ?uncode.}
                       OPTIONAL { ?country fao:codeISO3 ?iso3.}
-                      OPTIONAL { 
+                      OPTIONAL {
                         ?country fao:isInGroup ?region.
                         ?region a fao:geographical_region.
-                        { 
+                        {
                          ?region rdfs:label ?regiontitle.
                         } UNION {
                          ?region fao:nameList ?regiontitle.
                          FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
-                        } 
-                        OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                        }
+                        OPTIONAL { ?region dcterms:identifier ?regionID. }
                         OPTIONAL { ?region fao:codeUN ?regionuncode. }
                       }
                       FILTER(str(?iso2) = "__ID__" || str(?countrytitle) = "__NAME__" || str(?countryID) = "__ID__")
-                    } 
+                    }
         themes:
             queries:
               default:
@@ -466,7 +470,7 @@ parameters:
                     { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
                     OPTIONAL {
                         ?theme dcterms:identifier ?themeID.
-                      } 
+                      }
                     OPTIONAL {
                         ?theme skos:topConceptOf ?conceptscheme.
                       }
@@ -480,10 +484,10 @@ parameters:
                       #OPTIONAL {
                       #  ?theme skos:broader ?child OPTION (transitive, t_step (?theme) as ?parent_level, t_step("step_no") as ?plevel).
                       #  ?parent rdfs:label ?parent_title.
-                      #  ?parent dcterms:identifier ?parentID.    
-                      #} 
+                      #  ?parent dcterms:identifier ?parentID.
+                      #}
                       FILTER(str(?themeID) = "__ID__" || ?theme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?theme = <http://dbpedia.org/resource/__ID__>)
-                  } 
+                  }
         organisations:
             queries:
               default:
@@ -508,16 +512,16 @@ parameters:
                     ?region fao:codeUN ?uncode.
                   }
                 where: >
-                   WHERE { 
+                   WHERE {
                       ?region a fao:geographical_region.
-                      { 
+                      {
                          ?region rdfs:label ?regiontitle.
                       } UNION {
                          ?region fao:nameList ?regiontitle.
                          FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
-                      } 
+                      }
                       OPTIONAL { ?region dcterms:identifier ?regionID. }
-                      OPTIONAL { ?region fao:codeUN ?uncode.} 
+                      OPTIONAL { ?region fao:codeUN ?uncode.}
                       FILTER(str(?uncode) = "__ID__" || str(?regionID) = "__ID__" || str(?regiontitle) = "__NAME__")
                     }
       # Get all
@@ -565,7 +569,7 @@ parameters:
                     {
                        SELECT ?resource WHERE {
                           ?resource a bibo:Article.
-                        ++ FILTER  
+                        ++ FILTER
                         #Country filter
                             ?resource dcterms:coverage ?countryURI.
                             {
@@ -577,8 +581,8 @@ parameters:
                             ?countryURI fao:codeISO2 ?iso2.
                             OPTIONAL { ?countryURI dcterms:identifier ?country_identifier. }
                            FILTER(str(?iso2) ='__country__' || str(?country_identifier) = '__country__' || regex(?country,'^__country__$','i'))
-                        -- FILTER 
-                        ++ FILTER  
+                        -- FILTER
+                        ++ FILTER
                         #Region filter
                             ?resource dcterms:coverage ?regionURI.
                             ?regionURI a fao:geographical_region.
@@ -591,15 +595,15 @@ parameters:
                             OPTIONAL { ?regionURI fao:codeUN ?region_UN. }
                             OPTIONAL { ?regionURI dcterms:identifier ?region_identifier. }
                            FILTER(str(?region_UN) ='__region__' || str(?region_identifier) = '__region__' || regex(?region,'__region__','i'))
-                        -- FILTER 
-                        ++ FILTER  
+                        -- FILTER
+                        ++ FILTER
                         #Theme filter - we cannot support theme path
                             ?resource dcterms:subject ?theme.
                             OPTIONAL { ?theme dcterms:identifier ?themeID. }
                             FILTER(str(?themeID) = "__theme__" || ?theme = <http://aims.fao.org/aos/agrovoc/__theme__> || ?theme = <http://dbpedia.org/resource/__theme__>)
-                        -- FILTER 
-                        ++ FILTER  
-                        #Query filter. In future we should use advanced features of Virutoso to address 
+                        -- FILTER
+                        ++ FILTER
+                        #Query filter. In future we should use advanced features of Virutoso to address
                            ?resource dcterms:title ?title.
                            OPTIONAL {
                              ?resource dcterms:subject ?subject.
@@ -609,15 +613,15 @@ parameters:
                              ?resource dcterms:abstract ?abstract.
                            }
                            FILTER(regex(?title,'__q__','i') || regex(?subjectTitle,'__q__') || regex(?abstract,'__q__'))
-                        -- FILTER 
-                        ++ FILTER  
+                        -- FILTER
+                        ++ FILTER
                         #IATI Filter
                            ?resource dcterms:isPartOf ?project.
                            ?project dcterms:identifier ?projectID.
                            FILTER(regex(?projectID,'^__iati-identifier__$'))
-                        -- FILTER 
+                        -- FILTER
                        } LIMIT __LIMIT__ OFFSET __OFFSET__
-                       
+
                      }
                     ?resource dcterms:title ?title.
                     OPTIONAL { ?resource dcterms:abstract ?abstract. }
@@ -638,7 +642,7 @@ parameters:
                         ?subject rdfs:label ?subjectTitle.
                         OPTIONAL {
                             ?subject dcterms:identifier ?subjectID.
-                        } 
+                        }
                         OPTIONAL {
                             ?subjectParent skos:narrower ?subject.
                             # Uncomment out the line below to search up the category tree and give all the required steps for building a category path
@@ -699,7 +703,7 @@ parameters:
                 PREFIX bibo: <http://purl.org/ontology/bibo/>
                 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
                 PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
-              select: SELECT COUNT(distinct ?theme) as ?count 
+              select: SELECT COUNT(distinct ?theme) as ?count
               where: >
                 WHERE { ?theme a skos:Concept. }
             default:
@@ -725,21 +729,21 @@ parameters:
                 }
               where: >
                 WHERE {
-                  { 
+                  {
                     SELECT distinct ?theme WHERE {
                        #Only fetch themes that are in use
                        ?article dcterms:subject ?theme.
                        OPTIONAL { ?theme skos:topConceptOf ?scheme. }
-                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__ 
+                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__
                   }
-                    
+
                     { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
-                    
-                    
+
+
                     OPTIONAL {
                       ?theme dcterms:identifier ?themeID.
-                    } 
-                    
+                    }
+
                     OPTIONAL {
                       ?theme skos:topConceptOf ?conceptscheme.
                     }
@@ -748,16 +752,16 @@ parameters:
                       { ?child rdfs:label ?child_title. } UNION { ?child skos:prefLabel ?child_title. FILTER(lang(?child_title) = "en" || lang(?child_title) = "") }
                       OPTIONAL { ?child dcterms:identifier ?childID. }
                     }
-                    
+
                     # Omitting this for now as the query is too expensive. We might be able to build indexes to speed it up?
                     # ToDo: explore query optimisations.
                     #OPTIONAL {
                     #  ?theme skos:broader ?child OPTION (transitive, t_step (?theme) as ?parent_level, t_step("step_no") as ?plevel).
                     #  ?parent rdfs:label ?parent_title.
-                    #  ?parent dcterms:identifier ?parentID.    
-                    #} 
-                    
-                } 
+                    #  ?parent dcterms:identifier ?parentID.
+                    #}
+
+                }
         countries:
             queries:
               count:
@@ -770,15 +774,15 @@ parameters:
                  where: >
                   WHERE {
                     ?country fao:codeISO2 ?iso2.
-                     ++ FILTER 
+                     ++ FILTER
                               ?country fao:isInGroup ?region.
-                              
-                              OPTIONAL { ?region dcterms:identifier ?regionID. } 
+
+                              OPTIONAL { ?region dcterms:identifier ?regionID. }
                               OPTIONAL { ?region fao:codeUN ?regionuncode. }
                               FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
-                           
+
                      -- FILTER
-                  }               
+                  }
               default:
                 define: >
                   PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -799,43 +803,43 @@ parameters:
                     ?region a fao:geographical_region.
                   }
                 where: >
-                   WHERE { 
-                      { 
-                        SELECT ?country ?iso2 WHERE { 
+                   WHERE {
+                      {
+                        SELECT ?country ?iso2 WHERE {
                            ?country fao:codeISO2 ?iso2.
-                           ++ FILTER 
+                           ++ FILTER
                               ?country fao:isInGroup ?region.
-                              
-                              OPTIONAL { ?region dcterms:identifier ?regionID. } 
+
+                              OPTIONAL { ?region dcterms:identifier ?regionID. }
                               OPTIONAL { ?region fao:codeUN ?regionuncode. }
                               FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
-                           
+
                            -- FILTER
                          } LIMIT __LIMIT__ OFFSET __OFFSET__
-                      }  
-                      
-                      { 
+                      }
+
+                      {
                          ?country rdfs:label ?countrytitle.
                       } UNION {
                          ?country fao:nameList ?countrytitle.
                          FILTER(lang(?countrytitle) = 'en' || lang(?countrytitle) = "")
-                      } 
+                      }
                       OPTIONAL { ?country dcterms:identifier ?countryID. }
                       OPTIONAL { ?country fao:codeUN ?uncode.}
-                      OPTIONAL { ?country fao:codeISO3 ?iso3.} 
-                      OPTIONAL { 
+                      OPTIONAL { ?country fao:codeISO3 ?iso3.}
+                      OPTIONAL {
                         ?country fao:isInGroup ?region.
                         ?region a fao:geographical_region.
-                        { 
+                        {
                          ?region rdfs:label ?regiontitle.
                         } UNION {
                          ?region fao:nameList ?regiontitle.
                          FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
-                        } 
-                        OPTIONAL { ?region dcterms:identifier ?regionID. } 
+                        }
+                        OPTIONAL { ?region dcterms:identifier ?regionID. }
                         OPTIONAL { ?region fao:codeUN ?regionuncode. }
                       }
-                    } 
+                    }
         regions:
             queries:
               count:
@@ -848,7 +852,7 @@ parameters:
                  where: >
                   WHERE {
                     ?region a fao:geographical_region.
-                  } 
+                  }
               default:
                 define: >
                   PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -862,16 +866,16 @@ parameters:
                     ?region fao:codeUN ?uncode.
                   }
                 where: >
-                   WHERE { 
+                   WHERE {
                       ?region a fao:geographical_region.
-                      { 
+                      {
                          ?region rdfs:label ?regiontitle.
                       } UNION {
                          ?region fao:nameList ?regiontitle.
                          FILTER(lang(?regiontitle) = 'en' || lang(?regiontitle) = "")
-                      } 
+                      }
                       OPTIONAL { ?region dcterms:identifier ?regionID. }
-                      OPTIONAL { ?region fao:codeUN ?uncode.} 
+                      OPTIONAL { ?region fao:codeUN ?uncode.}
                     }
 # Get all
       get_children:
@@ -885,12 +889,12 @@ parameters:
                 PREFIX bibo: <http://purl.org/ontology/bibo/>
                 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
                 PREFIX fao: <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/>
-              select: SELECT COUNT(distinct ?theme) as ?count 
+              select: SELECT COUNT(distinct ?theme) as ?count
               where: >
-                WHERE { ?theme a skos:Concept. 
+                WHERE { ?theme a skos:Concept.
                        ?theme skos:broader ?parentTheme.
                        OPTIONAL { ?parentTheme dcterms:identifier ?parentID. }
-                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)                       
+                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)
                 }
             default:
               define: >
@@ -913,17 +917,17 @@ parameters:
                 }
               where: >
                 WHERE {
-                  { 
+                  {
                     SELECT distinct ?theme WHERE {
                        ?theme a skos:Concept.
                        ?theme skos:broader ?parentTheme.
                        OPTIONAL { ?parentTheme dcterms:identifier ?parentID. }
-                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)                       
-                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__ 
+                       FILTER(str(?parentID) = "__ID__" || ?parentTheme = <http://aims.fao.org/aos/agrovoc/__ID__> || ?parentTheme = <http://dbpedia.org/resource/__ID__>)
+                    } ORDER BY DESC(?scheme) LIMIT __LIMIT__ OFFSET __OFFSET__
                   }
-                    
+
                     { ?theme rdfs:label ?themetitle. } UNION { ?theme skos:prefLabel ?themetitle. FILTER(lang(?themetitle) = "en" || lang(?themetitle) = "") }
-                    
+
                     ?theme skos:broader ?parent.
                     { ?parent rdfs:label ?parent_title. } UNION { ?parent skos:prefLabel ?parent_title. FILTER(lang(?parent_title) = "en" || lang(?parent_title) = "") }
                     OPTIONAL {
@@ -931,11 +935,11 @@ parameters:
                     }
                     OPTIONAL {
                       ?theme dcterms:identifier ?themeID.
-                    } 
+                    }
                     OPTIONAL {
                       ?theme skos:topConceptOf ?conceptscheme.
                     }
                     OPTIONAL {
-                      ?theme skos:inScheme ?scheme. 
+                      ?theme skos:inScheme ?scheme.
                     }
-                } 
+                }
