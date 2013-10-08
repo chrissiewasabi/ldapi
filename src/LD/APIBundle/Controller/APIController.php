@@ -44,7 +44,7 @@ class APIController extends Controller
      */
     protected function chomp($graph, $spql, $factoryclass, $querybuilder, $format = 'short', $type = null)
     {
-        
+
         // get the sparql service
         $spqlsrvc = $this->get('sparql');
 
@@ -61,6 +61,25 @@ class APIController extends Controller
         $spqlsrvc->setQueryBuilder($_builder);
 
         // execute the query
+
+        if (isset($spql['filters'])) {
+            $filters = $spql['filters'];
+            // $parameters = $this->get('request')->attributes->get('_route_params');
+            $parameters = $this->get('request')->query->keys();
+            if (is_array($filters)) {
+                foreach ($filters as $key => $filter) {
+                    // now search for __ROUTE PARAM__
+                    foreach ($parameters as $_key) {
+                        $parameter = $this->get('request')->query->get($_key);
+                        $_param = '__' . $_key . '__';
+                        // and replace with PARAM
+                        if (strpos($filter, $_param)) {
+                            $spql['filters'][$key] = str_replace($_param, $parameter, $spql['filters'][$key]);
+                        }
+                    }
+                }
+            }
+        }
         $data = $spqlsrvc->query($spql, $_graph);
 
         $factory = new $factoryclass();
@@ -154,16 +173,16 @@ class APIController extends Controller
      */
     protected function _encodeHtml($data)
     {
-        
+
         $output = defined('JSON_PRETTY_PRINT') ? json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : json_encode($data);
         $output = preg_replace('@(https?://([-\w\.]+)+(:\d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>', $output);
-        
+
         $response = $this->render(
             'LDAPIBundle:API:response.html.twig',
             array(
                 'format_json' => $this->_getURL('json'),
                 'format_xml' => $this->_getURL('xml'),
-                'format_html' => $this->_getURL(''),                
+                'format_html' => $this->_getURL(''),
                 'json' => $output,
             )
         );
@@ -181,7 +200,7 @@ class APIController extends Controller
      */
     protected function _encodeXhtml($data)
     {
-       
+
         $response->headers->set('Content-type', 'application/xhtml+xml');
 
         return $this->_encodeHtml($data);
@@ -228,7 +247,7 @@ class APIController extends Controller
 
         return false;
     }
-    
+
     /**
      * Get current page path and add the format parameter
      *
@@ -244,9 +263,9 @@ class APIController extends Controller
         } else {
             unset($querystring['format']);
         }
-        
+
         $url = $base . "?". http_build_query($querystring);
-        
+
         return $url;
     }
 }

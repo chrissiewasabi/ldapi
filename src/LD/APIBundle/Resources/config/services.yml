@@ -83,6 +83,12 @@ parameters:
         # IDS equivelent - http://api.ids.ac.uk/docs/functions/count/
         documents:
           region:
+            filters:
+              region_filter: >
+                ?country fao:isInGroup ?region.
+                OPTIONAL { ?region dcterms:identifier ?regionID. }
+                OPTIONAL { ?region fao:codeUN ?regionuncode. }
+                FILTER(str(?regionuncode) = "__region__" || str(?regionID) = "__region__")
             queries:
               none:
                 unlimited: true
@@ -94,6 +100,7 @@ parameters:
                       OPTIONAL { ?article <http://purl.org/dc/terms/coverage> ?region .
                           ?region a <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/geographical_region>.}
                       FILTER(!BOUND(?region))
+                      **FILTER:region_filter**
                   }
               all:
                 unlimited: true
