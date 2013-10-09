@@ -100,7 +100,7 @@ parameters:
                       OPTIONAL { ?article <http://purl.org/dc/terms/coverage> ?region .
                           ?region a <http://www.fao.org/countryprofiles/geoinfo/geopolitical/resource/geographical_region>.}
                       FILTER(!BOUND(?region))
-                      **FILTER:region_filter**
+                  #    **FILTER:region_filter**
                   }
               all:
                 unlimited: true

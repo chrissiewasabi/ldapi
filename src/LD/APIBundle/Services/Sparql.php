@@ -94,7 +94,7 @@ class Sparql
     {
         $data = array();
         foreach ($elements['queries'] as $key => $query) {
-            $data[$key] = $this->__query($query, $graph);
+            $data[$key] = $this->__query($query, $graph, $elements['filters']);
             // $count += count($data[$key]);
         }
 
@@ -106,14 +106,35 @@ class Sparql
      *
      * This will be called multiple times from Sparql::query
      *
-     * @param array  $elements The query in the form of an array
-     * @param string $graph    The graph to access
+     * @param array  $elements      The query in the form of an array
+     * @param string $graph         The graph to access
+     * @param array  $globalFilters The top level global filters
      *
      * @return EasyRdf_Sparql_Result|EasyRdf_Graph|array
      */
-    private function __query(array $elements, $graph)
+    private function __query(array $elements, $graph, $globalFilters)
     {
         $query = $this->getQueryBuilder()->createQuery($elements, $graph);
+        // TODO this should probably moved a query service
+        $start = strpos($query, '**FILTER:');
+        if ($start !== false) {
+            // TODO This could all be cleaned up.  It really needs some error checking
+            $end = strpos($query, '**', $start + 1) + 2;
+
+            $qstart = substr($query, 0, $start);
+            $filtertext = substr($query, $start, $end - $start);
+            // $filtername = \substr($filtertext, \strpos($filtertext, ':'));
+            // TODO this is just ugly but the project is getting binned
+            $filtername = \trim(\substr($filtertext, \strpos($filtertext, ':')), ' :*');
+            $qend = substr($query, $end);
+
+            $filter = '';
+            if (isset($globalFilters[$filtername])) {
+                $filter = $globalFilters[$filtername];
+            }
+
+            $query = $qstart . $filter . $qend;
+        }
         $this->container->get('logger')->debug('Query: ' . $query);
         $client = new \EasyRdf_Sparql_Client($this->endpoint);
 
