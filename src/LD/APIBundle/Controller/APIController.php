@@ -80,7 +80,6 @@ class APIController extends Controller
                 }
             }
         }
-        $this->container->get('logger')->debug('Spql: ' . json_encode($spql));
         $data = $spqlsrvc->query($spql, $_graph);
 
         $factory = new $factoryclass();
@@ -90,7 +89,7 @@ class APIController extends Controller
 
         return $response;
     }
-
+    
     /**
      * Wrapper to the symfony logger
      *
